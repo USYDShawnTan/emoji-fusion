@@ -1,76 +1,46 @@
 # Emoji Fusion
 
-This project is a web application that allows users to combine two emojis into a larger emoji using a provided API. The application is built with React and styled using Tailwind CSS.
+这个项目是一个网页应用程序，允许用户通过提供的 API 将两个表情符号合并成一个更大的表情符号。该应用程序使用 React 构建，并使用 Tailwind CSS 进行样式设计。
 
-## Features
+## 功能特点
 
-- Select two emojis from a picker.
-- Display the combined emoji on a canvas.
-- Show detailed information about the fusion result, including API responses.
+- 从选择器中选择两个表情符号。
+- 在画布上显示合并后的表情符号。
+- 显示有关融合结果的详细信息，包括 API 响应。
 
-## Project Structure
+## 安装
 
-```
-emoji-fusion
-├── public
-│   ├── favicon.svg
-│   └── index.html
-├── src
-│   ├── components
-│   │   ├── App.tsx
-│   │   ├── EmojiCanvas.tsx
-│   │   ├── EmojiPicker.tsx
-│   │   └── FusionResult.tsx
-│   ├── hooks
-│   │   └── useEmojiApi.ts
-│   ├── services
-│   │   └── emojiApiService.ts
-│   ├── types
-│   │   └── index.ts
-│   ├── styles
-│   │   └── tailwind.css
-│   ├── index.tsx
-│   └── vite-env.d.ts
-├── package.json
-├── postcss.config.js
-├── tailwind.config.js
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
-
-## Installation
-
-1. Clone the repository:
+1. 克隆仓库：
    ```
    git clone <repository-url>
    ```
-2. Navigate to the project directory:
+2. 进入项目目录：
    ```
    cd emoji-fusion
    ```
-3. Install the dependencies:
+3. 安装依赖：
    ```
    npm install
    ```
 
-## Usage
+## 使用方法
 
-To start the development server, run:
+要启动开发服务器，运行：
+
 ```
 npm run dev
 ```
 
-Open your browser and go to `http://localhost:3000` to view the application.
+打开浏览器并访问 `http://localhost:5173` 查看应用程序。
 
 ## API
 
-The application interacts with an emoji fusion API to combine the selected emojis. Ensure that the API is running and accessible.
+该应用程序与表情符号融合 API 交互，以合并所选的表情符号。确保 API 正在运行且可访问。
 
-## Contributing
+## 贡献
 
-Feel free to submit issues or pull requests for improvements or bug fixes. 
+欢迎提交问题或拉取请求，以改进或修复错误。
 
-## License
+## 许可证
 
-This project is licensed under the MIT License.
+该项目根据 MIT 许可证授权。
