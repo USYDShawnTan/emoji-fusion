@@ -1,0 +1,8 @@
+# filepath: netlify.toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[dev]
+  command = "npm run dev"
+  port = 5173
