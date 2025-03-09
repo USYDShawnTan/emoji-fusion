@@ -7,6 +7,7 @@ const App: React.FC = () => {
   const [selectedEmoji1, setSelectedEmoji1] = useState<string>('');
   const [selectedEmoji2, setSelectedEmoji2] = useState<string>('');
   const { loading, error, fusionResult, fusionEmoji } = useEmojiApi();
+  const [isRandomHovered, setIsRandomHovered] = useState(false);
   
   // 使用useRef保存一个标志，表示是否已经进行过合成
   const hasFusedOnce = useRef(false);
@@ -15,45 +16,53 @@ const App: React.FC = () => {
   const prevEmoji1 = useRef(selectedEmoji1);
   const prevEmoji2 = useRef(selectedEmoji2);
 
-  // 监听两个emoji的变化，应用逻辑：
-  // 1. 如果从未合成过，不自动触发
-  // 2. 如果已经合成过至少一次，则emoji变化时自动触发
+  // 监听两个emoji的变化，自动触发融合逻辑
   useEffect(() => {
-    // 检查是否有emoji变化
     const emoji1Changed = prevEmoji1.current !== selectedEmoji1;
     const emoji2Changed = prevEmoji2.current !== selectedEmoji2;
     
-    // 更新上一次的值，用于下次比较
     prevEmoji1.current = selectedEmoji1;
     prevEmoji2.current = selectedEmoji2;
     
-    // 如果没有变化，或者两个emoji中有任何一个没有选择，则不触发
     if ((!emoji1Changed && !emoji2Changed) || !selectedEmoji1 || !selectedEmoji2) {
       return;
     }
     
-    // 关键逻辑：只有当hasFusedOnce为true时，才自动触发
     if (hasFusedOnce.current) {
-      // 添加短暂延迟，避免用户频繁切换时过多API请求
       const timer = setTimeout(() => {
         fusionEmoji(selectedEmoji1, selectedEmoji2);
-      }, 300); // 300ms延迟
+      }, 300);
       
       return () => clearTimeout(timer);
     }
   }, [selectedEmoji1, selectedEmoji2, fusionEmoji]);
 
-  // 手动触发融合的处理函数
+  // 手动触发融合
   const handleManualFusion = () => {
     if (selectedEmoji1 && selectedEmoji2 && !loading) {
-      // 设置标志，表示已经进行过至少一次合成
       hasFusedOnce.current = true;
       fusionEmoji(selectedEmoji1, selectedEmoji2);
     }
   };
 
-  // 检查是否可以合成
   const canFuse = selectedEmoji1 && selectedEmoji2 && !loading;
+  
+  // 随机合成：调用API后，不仅设置选中的emoji，还立即触发合成
+  const handleRandomFusion = async () => {
+    try {
+      const res = await fetch('https://api.433200.xyz/api/emoji?type=random');
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedEmoji1(data.emoji1);
+        setSelectedEmoji2(data.emoji2);
+        // 立即触发合成
+        hasFusedOnce.current = true;
+        fusionEmoji(data.emoji1, data.emoji2);
+      }
+    } catch (err) {
+      console.error('随机合成失败', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -73,7 +82,7 @@ const App: React.FC = () => {
                 label="第一个Emoji"
               />
             </div>
-             <span className="text-4xl mt-6">➕</span>
+            <span className="text-4xl mt-6">➕</span>
             <div className="w-[170px]">
               <EmojiPicker 
                 selectedEmoji={selectedEmoji2} 
@@ -83,14 +92,31 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          {/* 合成按钮 - 始终显示但根据状态禁用 */}
+          {/* 随机合成按钮 - 使用🎲按钮，并在悬停时放大、旋转并显示文字 */}
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={handleRandomFusion}
+              onMouseEnter={() => setIsRandomHovered(true)}
+              onMouseLeave={() => setIsRandomHovered(false)}
+              style={{ transform: isRandomHovered ? "scale(1.2)" : "scale(1)" }}
+              className="p-3 rounded-full bg-blue-500 text-white transition-all duration-300"
+            >
+              <img
+                src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f3b2/512.gif"
+                alt="随机emoji"
+                className="w-6 h-6"
+              />
+            </button>
+          </div>
+          
+          {/* 合成按钮 */}
           <div className="flex justify-center items-center mt-8">
             <button 
               onClick={handleManualFusion}
               disabled={!canFuse}
               className={`
                 py-3 px-8 rounded-full text-lg font-bold flex items-center justify-center
-                transition-all duration-200 w-48
+                transition-all duration-200 w-48 transform hover:scale-[1.1]
                 ${canFuse 
                   ? "bg-purple-600 hover:bg-purple-700 text-white shadow-md" 
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"}
@@ -113,7 +139,7 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* 结果部分 - 下方居中 */}
+        {/* 结果部分 */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h2 className="text-2xl font-semibold text-center mb-6">合成结果</h2>
           <FusionResult 
@@ -123,7 +149,6 @@ const App: React.FC = () => {
           />
         </div>
         
-        {/* 页脚信息 */}
         <footer className="text-center text-gray-500 text-sm mt-8">
           Emoji Fusion &copy; {new Date().getFullYear()}
         </footer>
