@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import EmojiPicker from './EmojiPicker';
 import FusionResult from './FusionResult';
+import EmojiQuantumField from './EmojiQuantumField';
 import useEmojiApi from '../hooks/useEmojiApi';
 
 const App: React.FC = () => {
@@ -65,15 +66,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="container mx-auto px-4 max-w-3xl">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900/40 via-purple-800/30 to-pink-900/40 py-8 relative overflow-hidden">
+      {/* 量子背景场 */}
+      <EmojiQuantumField />
+      
+      <div className="container mx-auto px-4 max-w-3xl relative z-10">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-purple-600">Emoji Fusion</h1>
-          <p className="text-lg text-gray-600 mt-2">创建你独特的emoji组合!</p>
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg">Emoji Fusion</h1>
+          <p className="text-lg text-gray-200 mt-2">创建你独特的emoji组合!</p>
         </header>
         
-        {/* 选择器部分 - 上方两个正方形容器 */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        {/* 主要内容 - 增加背景模糊效果以增强可读性 */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-center gap-12 mb-8">
             <div className="w-[170px]">
               <EmojiPicker 
@@ -139,8 +143,8 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* 结果部分 */}
-        <div className="bg-white rounded-xl shadow-md p-6">
+        {/* 结果部分也添加背景模糊 */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-semibold text-center mb-6">合成结果</h2>
           <FusionResult 
             loading={loading}
@@ -149,7 +153,7 @@ const App: React.FC = () => {
           />
         </div>
         
-        <footer className="text-center text-gray-500 text-sm mt-8">
+        <footer className="text-center text-gray-300 text-sm mt-8">
           Emoji Fusion &copy; {new Date().getFullYear()}
         </footer>
       </div>

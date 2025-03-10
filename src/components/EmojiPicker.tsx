@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import EmojiPickerReact, { EmojiClickData, EmojiStyle } from 'emoji-picker-react';
+import React, { useState, useEffect, useRef } from 'react';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 
 interface EmojiPickerProps {
   selectedEmoji: string;
@@ -28,12 +29,31 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
   const [staticEmojiUrl, setStaticEmojiUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
   
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    onEmojiSelect(emojiData.emoji);
+  // 使用正确的 emoji-mart 回调格式
+  const handleEmojiSelect = (emojiData: any) => {
+    onEmojiSelect(emojiData.native);
     setShowPicker(false);
     setIsHovered(false); // 选择完毕后取消鼠标悬停状态
   };
+
+  // 点击外部区域关闭选择器
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPicker]);
 
   // 当选中emoji变化时，设置静态图片和尝试加载动态版本
   useEffect(() => {
@@ -66,7 +86,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
 
   // 计算容器的大致大小以设置emoji大小
   const [containerSize, setContainerSize] = useState<number>(100);
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const updateSize = () => {
@@ -167,23 +187,55 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
           )}
         </button>
 
-        {/* emoji选择器弹窗 */}
+        {/* 使用Portal确保emoji选择器在最顶层显示 */}
         {showPicker && (
-          <div className="absolute z-20 mt-2 w-full min-w-[320px]">
-            <div className="bg-white shadow-lg rounded-lg border border-gray-200">
-              <div className="p-2 border-b flex justify-between items-center">
+          <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowPicker(false);
+              }
+            }}
+          >
+            <div 
+              ref={pickerRef}
+              className="bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-auto"
+              style={{
+                position: 'relative',
+                width: 'min(350px, 200vw)'
+              }}
+            >
+              <div className="p-2 border-b flex justify-between items-center sticky top-0 bg-white z-10">
                 <span className="font-medium">选择一个Emoji</span>
                 <button 
-                  className="text-gray-500 hover:text-gray-700"
+                  className="p-1.5 hover:bg-gray-100 rounded-full"
                   onClick={() => setShowPicker(false)}
                 >
-                  ✕
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
                 </button>
               </div>
-              <EmojiPickerReact 
-                onEmojiClick={handleEmojiClick}
-                emojiStyle={EmojiStyle.GOOGLE} // 明确使用Google风格
-              />
+              <div className="emoji-mart-container">
+                <Picker 
+                  onEmojiSelect={handleEmojiSelect}
+                  perLine={8}
+                  set="google"
+                  theme="light"
+                  emojiButtonSize={40}
+                  emojiSize={24}
+                  locale="zh"
+                  autoFocus={true}
+                  emojiButtonColors={[
+                    'rgba(155,223,88,.7)',   // 浅绿色
+                    'rgba(149,211,254,.7)',  // 浅蓝色
+                    'rgba(247,233,34,.7)',   // 黄色
+                    'rgba(238,166,252,.7)',  // 粉紫色
+                    'rgba(255,213,143,.7)',  // 橙色
+                    'rgba(211,209,255,.7)',  // 淡紫色
+                  ]}
+                />
+              </div>
             </div>
           </div>
         )}
