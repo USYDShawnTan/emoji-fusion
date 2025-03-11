@@ -180,14 +180,30 @@ const unicodeToEmoji = (code: string): string => {
 
 /**
  * 获取 Google 风格的静态 Emoji 图片 URL
- * 例如: "☹️" => "https://cdn.jsdelivr.net/npm/emoji-datasource-google/img/google/64/2639-fe0f.png"
+ * 例如: "☹️" => "https://cdn.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/2639-fe0f.png"
+ * 提供国内友好的备用 CDN
  */
 export const getGoogleEmojiImage = (emoji: string): string | null => {
   try {
     const codePointStr = getCompleteEmojiUnicode(emoji);
     if (!codePointStr) return null;
     
-    return `https://cdn.jsdelivr.net/npm/emoji-datasource-google/img/google/64/${codePointStr}.png`;
+    // CDN 列表，按优先级排序
+    const cdnUrls = [
+      // 主要 CDN - jsdelivr (全球通用，国内速度尚可)
+      `https://cdn.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`,
+      
+      // 国内友好的备用 CDN
+      `https://fastly.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // jsdelivr Fastly 节点
+      `https://gcore.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // jsdelivr Gcore 节点
+      
+      // 其他备用选项
+      `https://unpkg.zhimg.com/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // 知乎 unpkg 镜像
+      `https://unpkg.com/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // 原始 unpkg (备用)
+    ];
+    
+    // 返回首选CDN，浏览器会在加载失败时自动尝试onerror处理
+    return cdnUrls[0];
   } catch (e) {
     console.error("Error getting Google emoji image:", e);
     return null;
