@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import { getGoogleEmojiImage, getDynamicEmojiUrl } from '../utils/emojiUtils';
 
 interface EmojiPickerProps {
   selectedEmoji: string;
@@ -8,25 +8,10 @@ interface EmojiPickerProps {
   label: string;
 }
 
-// 从emoji字符获取Google风格的图片URL
-const getGoogleEmojiImage = (emoji: string): string | null => {
-  try {
-    // 获取Unicode码点
-    const codePoint = emoji.codePointAt(0)?.toString(16);
-    if (!codePoint) return null;
-    
-    // 返回Google风格的emoji图片 - 使用64px版本
-    return `https://cdn.jsdelivr.net/npm/emoji-datasource-google/img/google/64/${codePoint}.png`;
-  } catch (e) {
-    console.error("Error getting emoji image:", e);
-    return null;
-  }
-};
-
 const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect, label }) => {
   const [showPicker, setShowPicker] = useState(false);
-  const [dynamicEmojiUrl, setDynamicEmojiUrl] = useState<string | null>(null);
   const [staticEmojiUrl, setStaticEmojiUrl] = useState<string | null>(null);
+  const [dynamicEmojiUrl, setDynamicEmojiUrl] = useState<string | null>(null); // 添加动态emoji URL状态
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -55,32 +40,20 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
     };
   }, [showPicker]);
 
-  // 当选中emoji变化时，设置静态图片和尝试加载动态版本
+  // 当选中emoji变化时，设置静态图片和动态图片
   useEffect(() => {
     if (selectedEmoji) {
       setLoading(true);
-      setDynamicEmojiUrl(null);
       
       // 设置Google风格的静态emoji图片URL
       const staticUrl = getGoogleEmojiImage(selectedEmoji);
       setStaticEmojiUrl(staticUrl);
       
-      // 尝试加载动态版本
-      fetch(`https://api.433200.xyz/api/dynamic-emoji?emoji=${encodeURIComponent(selectedEmoji)}&type=pic`)
-        .then(response => {
-          if (response.ok) {
-            return response.url; // 直接返回URL，因为响应是GIF图片
-          }
-          return null;
-        })
-        .then(url => {
-          setDynamicEmojiUrl(url);
-          setLoading(false);
-        })
-        .catch(() => {
-          setDynamicEmojiUrl(null);
-          setLoading(false);
-        });
+      // 设置动态emoji URL
+      const dynamicUrl = getDynamicEmojiUrl(selectedEmoji);
+      setDynamicEmojiUrl(dynamicUrl);
+      
+      setLoading(false);
     }
   }, [selectedEmoji]);
 
@@ -107,10 +80,8 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
   }, []);
 
   // 计算图片适当尺寸 
-  // 静态图片使用45%比例
-  const staticImgSize = Math.min(Math.floor(containerSize * 0.45), 64);
-  // 动态图片使用65%比例（悬停后更大）
-  const dynamicImgSize = Math.min(Math.floor(containerSize * 0.65), 72);
+  const staticImgSize = Math.min(Math.floor(containerSize * 0.6), 64);
+  const dynamicImgSize = Math.min(Math.floor(containerSize * 0.7), 72); // 动态图片略大
 
   return (
     <div className="flex flex-col">
@@ -138,23 +109,23 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
             loading ? (
               <div className="animate-pulse bg-gray-200 w-1/3 h-1/3 rounded-full"></div>
             ) : (isHovered && dynamicEmojiUrl) ? (
-              // 悬停时显示动态emoji - 使用更大的尺寸 (65%)
+              // 悬停时显示动态emoji
               <div className="flex items-center justify-center transition-all duration-300">
                 <img 
                   src={dynamicEmojiUrl} 
-                  alt={selectedEmoji} 
+                  alt={selectedEmoji}
                   style={{
                     width: `${dynamicImgSize}px`,
                     height: `${dynamicImgSize}px`,
                     objectFit: 'contain',
-                    transform: isHovered ? 'scale(1.5)' : 'scale(1.2)',
+                    transform: 'scale(1.2)',
                     transition: 'transform 0.3s ease-in-out'
                   }}
-                  onError={() => setDynamicEmojiUrl(null)}
+                  onError={() => setDynamicEmojiUrl(null)} // 如果动态图加载失败，会回退到静态图
                 />
               </div>
             ) : (staticEmojiUrl ? (
-              // 默认显示Google风格的静态emoji - 使用45%比例
+              // 默认显示Google风格的静态emoji
               <div className="flex items-center justify-center transition-all duration-300">
                 <img 
                   src={staticEmojiUrl} 
@@ -163,14 +134,14 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
                     width: `${staticImgSize}px`,
                     height: `${staticImgSize}px`,
                     objectFit: 'contain',
-                    transform: isHovered ? 'scale(1.5)' : 'scale(1.2)',
+                    transform: isHovered ? 'scale(1.2)' : 'scale(1)',
                     transition: 'transform 0.3s ease-in-out'
                   }}
                   onError={() => setStaticEmojiUrl(null)}
                 />
               </div>
             ) : (
-              // 回退到系统emoji（仅在静态图片加载失败时使用）- 使用相同尺寸
+              // 回退到系统emoji
               <div className="flex items-center justify-center transition-all duration-300">
                 <span style={{ 
                   fontSize: `${staticImgSize * 0.8}px`,
@@ -220,12 +191,13 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
                 <Picker 
                   onEmojiSelect={handleEmojiSelect}
                   perLine={8}
-                  set="google"
+                  set="google"  
                   theme="light"
                   emojiButtonSize={40}
                   emojiSize={24}
                   locale="zh"
                   autoFocus={true}
+                  emojiButtonRadius="6px"
                   emojiButtonColors={[
                     'rgba(155,223,88,.7)',   // 浅绿色
                     'rgba(149,211,254,.7)',  // 浅蓝色
