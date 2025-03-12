@@ -43,7 +43,7 @@ const EmojiQuantumField: React.FC<EmojiQuantumFieldProps> = ({
       antialias: window.devicePixelRatio < 1.5
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制最高像素比
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
@@ -57,7 +57,7 @@ const EmojiQuantumField: React.FC<EmojiQuantumFieldProps> = ({
     const size = isMobile ? emojiSize.mobile : emojiSize.base;
     
     // 创建粒子几何
-    const particleCount = isMobile ? 40 : 70; // 增加粒子数量
+    const particleCount = isMobile ? 25 : 50; // 减少默认粒子数量
     const particles = new THREE.BufferGeometry();
     
     // 扩展Emoji列表到至少20个
