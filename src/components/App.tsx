@@ -3,13 +3,11 @@ import EmojiPicker from './EmojiPicker';
 import FusionResult from './FusionResult';
 import EmojiQuantumField from './EmojiQuantumField';
 import useEmojiApi from '../hooks/useEmojiApi';
-import { useRandomEmojiMix } from '../utils/emojiUtils';
 
 const App: React.FC = () => {
   const [selectedEmoji1, setSelectedEmoji1] = useState<string>('');
   const [selectedEmoji2, setSelectedEmoji2] = useState<string>('');
-  const { loading, error, fusionResult, fusionEmoji } = useEmojiApi();
-  const { getRandomMix, result: randomMixResult } = useRandomEmojiMix();
+  const { loading, error, fusionResult, fusionEmoji, randomMix, cacheInfo } = useEmojiApi();
   const [isRandomHovered, setIsRandomHovered] = useState(false);
   
   // 使用useRef保存一个标志，表示是否已经进行过合成
@@ -19,6 +17,11 @@ const App: React.FC = () => {
   const prevEmoji1 = useRef(selectedEmoji1);
   const prevEmoji2 = useRef(selectedEmoji2);
 
+  // 修复：添加一个状态来控制是否显示假加载
+  const [isFakeLoading, setIsFakeLoading] = useState(false);
+  // 存储随机生成的结果，以便在假加载后使用
+  const pendingRandomResult = useRef<{emoji1: string, emoji2: string, resultUrl: string} | null>(null);
+
   // 监听两个emoji的变化，自动触发融合逻辑
   useEffect(() => {
     const emoji1Changed = prevEmoji1.current !== selectedEmoji1;
@@ -27,39 +30,76 @@ const App: React.FC = () => {
     prevEmoji1.current = selectedEmoji1;
     prevEmoji2.current = selectedEmoji2;
     
+    // 如果没有变化或者有空值，则不处理
     if ((!emoji1Changed && !emoji2Changed) || !selectedEmoji1 || !selectedEmoji2) {
       return;
     }
     
-    if (hasFusedOnce.current) {
+    // 如果不是骰子操作（骰子操作会单独处理）
+    if (hasFusedOnce.current && !isFakeLoading) {
       const timer = setTimeout(() => {
         fusionEmoji(selectedEmoji1, selectedEmoji2);
       }, 300);
       
       return () => clearTimeout(timer);
     }
-  }, [selectedEmoji1, selectedEmoji2, fusionEmoji]);
+  }, [selectedEmoji1, selectedEmoji2, fusionEmoji, isFakeLoading]);
 
   // 手动触发融合
   const handleManualFusion = () => {
-    if (selectedEmoji1 && selectedEmoji2 && !loading) {
+    if (selectedEmoji1 && selectedEmoji2 && !loading && !isFakeLoading) {
       hasFusedOnce.current = true;
       fusionEmoji(selectedEmoji1, selectedEmoji2);
     }
   };
 
-  const canFuse = selectedEmoji1 && selectedEmoji2 && !loading;
+  // 判断是否可以进行合成
+  const canFuse = selectedEmoji1 && selectedEmoji2 && !loading && !isFakeLoading;
   
-  // 随机合成：使用emojiUtils中的useRandomEmojiMix
-  const handleRandomFusion = async () => {
-    await getRandomMix();
-    if (randomMixResult) {
-      setSelectedEmoji1(randomMixResult.emoji1);
-      setSelectedEmoji2(randomMixResult.emoji2);
-      // 立即触发合成
-      hasFusedOnce.current = true;
-      fusionEmoji(randomMixResult.emoji1, randomMixResult.emoji2);
+  // 修改后的随机合成函数，添加假加载效果
+  const handleRandomFusion = () => {
+    if (loading || isFakeLoading) return; // 防止重复点击
+    
+    // 设置假加载状态
+    setIsFakeLoading(true);
+    
+    // 获取随机组合
+    const randomResult = randomMix();
+    
+    if (randomResult) {
+      // 存储结果，但不立即使用
+      pendingRandomResult.current = randomResult;
+      
+      // 模拟加载过程
+      setTimeout(() => {
+        // 假加载结束后，设置emoji并显示结果
+        setSelectedEmoji1(randomResult.emoji1);
+        setSelectedEmoji2(randomResult.emoji2);
+        hasFusedOnce.current = true;
+        
+        // 直接设置结果，跳过正常的API调用
+        // 但使用setTimeout让UI有时间更新
+        setTimeout(() => {
+          // 使用自定义函数来处理随机结果
+          handleRandomResult(randomResult);
+          setIsFakeLoading(false);
+        }, 50);
+      }, Math.random() * 150 + 150); // 随机延迟150-300ms
+    } else {
+      console.warn("⚠️ 缓存为空，无法使用随机组合");
+      // 即使没有缓存，也结束假加载状态
+      setTimeout(() => {
+        setIsFakeLoading(false);
+      }, 300);
     }
+  };
+  
+  // 处理随机结果的特殊函数
+  const handleRandomResult = (result: {emoji1: string, emoji2: string, resultUrl: string}) => {
+    // 这里我们需要直接设置结果，而不是通过API调用
+    // 可以通过修改useEmojiApi的fusionEmoji函数来实现
+    // 或者在这里直接操作状态
+    fusionEmoji(result.emoji1, result.emoji2)
   };
 
   return (
@@ -89,25 +129,34 @@ const App: React.FC = () => {
                 selectedEmoji={selectedEmoji2} 
                 onEmojiSelect={setSelectedEmoji2}
                 label="第二个Emoji"
+
               />
             </div>
           </div>
           
-          {/* 随机合成按钮 - 使用🎲按钮，并在悬停时放大、旋转并显示文字 */}
-          <div className="flex justify-center mb-6">
+          {/* 随机合成按钮 - 移除禁用状态 */}
+          <div className="flex justify-center mb-6 relative">
             <button
               onClick={handleRandomFusion}
               onMouseEnter={() => setIsRandomHovered(true)}
               onMouseLeave={() => setIsRandomHovered(false)}
+              // 修改：不再禁用按钮
+              // disabled={loading || !cacheInfo.ready}
               style={{ transform: isRandomHovered ? "scale(1.2)" : "scale(1)" }}
-              className="p-3 rounded-full bg-blue-500 text-white transition-all duration-300"
+              className={`p-3 rounded-full transition-all duration-300 ${
+                loading || isFakeLoading
+                  ? 'bg-blue-400' // 轻微降低亮度，但不禁用
+                  : 'bg-blue-500 hover:bg-blue-600'
+              } text-white`}
             >
               <img
                 src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f3b2/512.gif"
                 alt="随机emoji"
-                className="w-6 h-6"
+                className={`w-6 h-6 ${(loading || isFakeLoading) ? 'animate-pulse' : ''}`}
               />
             </button>
+            
+
           </div>
           
           {/* 合成按钮 */}
@@ -123,7 +172,7 @@ const App: React.FC = () => {
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"}
               `}
             >
-              {loading ? (
+              {loading || isFakeLoading ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -144,7 +193,7 @@ const App: React.FC = () => {
         <div className="bg-white/80 backdrop-blur-lg rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-semibold text-center mb-6">合成结果</h2>
           <FusionResult 
-            loading={loading}
+            loading={loading || isFakeLoading}
             error={error}
             result={fusionResult}
           />
