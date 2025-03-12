@@ -191,18 +191,53 @@ export const getGoogleEmojiImage = (emoji: string): string | null => {
     // CDN 列表，按优先级排序
     const cdnUrls = [
       // 主要 CDN - jsdelivr (全球通用，国内速度尚可)
-      `https://cdn.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`,
+      `https://cdn.jsdelivr.net/npm/emoji-datasource-google@15.0.1/img/google/64/${codePointStr}.png`,
       
       // 国内友好的备用 CDN
-      `https://fastly.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // jsdelivr Fastly 节点
-      `https://gcore.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // jsdelivr Gcore 节点
-      
-      // 其他备用选项
-      `https://unpkg.zhimg.com/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // 知乎 unpkg 镜像
-      `https://unpkg.com/emoji-datasource-google@15.0.0/img/google/64/${codePointStr}.png`, // 原始 unpkg (备用)
+      `https://fastly.jsdelivr.net/npm/emoji-datasource-google@15.0.1/img/google/64/${codePointStr}.png`,
+      `https://cdn.staticfile.org/emoji-datasource-google/15.0.1/img/google/64/${codePointStr}.png`,
+
     ];
+
+    // 缓存检查结果，避免重复请求
+    const cachedKey = `emoji-cdn-${codePointStr}`;
+    const cachedUrl = localStorage.getItem(cachedKey);
+    if (cachedUrl) return cachedUrl;
     
-    // 返回首选CDN，浏览器会在加载失败时自动尝试onerror处理
+    // 创建一个加载图片的 Promise
+    const loadImage = (url: string): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(url);
+        img.onerror = () => reject();
+        img.src = url;
+      });
+    };
+
+    // 并行请求所有 CDN
+    Promise.race(cdnUrls.map(url => loadImage(url)))
+      .then(fastestUrl => {
+        // 缓存最快的 URL (24小时)
+        localStorage.setItem(cachedKey, fastestUrl);
+        localStorage.setItem(`${cachedKey}-timestamp`, Date.now().toString());
+      })
+      .catch(console.error);
+
+    // 清理过期缓存
+    const now = Date.now();
+    const cacheExpiry = 24 * 60 * 60 * 1000; // 24小时
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('emoji-cdn-') && key.endsWith('-timestamp')) {
+        const timestamp = parseInt(localStorage.getItem(key) || '0');
+        if (now - timestamp > cacheExpiry) {
+          const cacheKey = key.replace('-timestamp', '');
+          localStorage.removeItem(cacheKey);
+          localStorage.removeItem(key);
+        }
+      }
+    });
+
+    // 返回首选CDN作为默认值，等待并行请求完成
     return cdnUrls[0];
   } catch (e) {
     console.error("Error getting Google emoji image:", e);
