@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data/sets/14/google.json'
+import data from '@emoji-mart/data/sets/15/google.json'
 import { getGoogleEmojiImage, getDynamicEmojiUrl } from '../utils/emojiUtils';
 
 interface EmojiPickerProps {
