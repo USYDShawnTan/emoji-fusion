@@ -3,11 +3,13 @@ import EmojiPicker from './EmojiPicker';
 import FusionResult from './FusionResult';
 import EmojiQuantumField from './EmojiQuantumField';
 import useEmojiApi from '../hooks/useEmojiApi';
+import { useRandomEmojiMix } from '../utils/emojiUtils';
 
 const App: React.FC = () => {
   const [selectedEmoji1, setSelectedEmoji1] = useState<string>('');
   const [selectedEmoji2, setSelectedEmoji2] = useState<string>('');
   const { loading, error, fusionResult, fusionEmoji } = useEmojiApi();
+  const { getRandomMix, result: randomMixResult } = useRandomEmojiMix();
   const [isRandomHovered, setIsRandomHovered] = useState(false);
   
   // 使用useRef保存一个标志，表示是否已经进行过合成
@@ -48,20 +50,15 @@ const App: React.FC = () => {
 
   const canFuse = selectedEmoji1 && selectedEmoji2 && !loading;
   
-  // 随机合成：调用API后，不仅设置选中的emoji，还立即触发合成
+  // 随机合成：使用emojiUtils中的useRandomEmojiMix
   const handleRandomFusion = async () => {
-    try {
-      const res = await fetch('https://api.433200.xyz/api/emoji?type=random');
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedEmoji1(data.emoji1);
-        setSelectedEmoji2(data.emoji2);
-        // 立即触发合成
-        hasFusedOnce.current = true;
-        fusionEmoji(data.emoji1, data.emoji2);
-      }
-    } catch (err) {
-      console.error('随机合成失败', err);
+    await getRandomMix();
+    if (randomMixResult) {
+      setSelectedEmoji1(randomMixResult.emoji1);
+      setSelectedEmoji2(randomMixResult.emoji2);
+      // 立即触发合成
+      hasFusedOnce.current = true;
+      fusionEmoji(randomMixResult.emoji1, randomMixResult.emoji2);
     }
   };
 

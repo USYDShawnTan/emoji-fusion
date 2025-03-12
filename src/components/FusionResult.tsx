@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface FusionResultProps {
   loading: boolean;
   error: Error | null;
-  result: any | null;
+  result: { url: string } | null;
 }
 
 const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+  
+  // 当result变化时，重置图片加载状态
+  useEffect(() => {
+    if (result) {
+      setImageLoading(true);
+    }
+  }, [result?.url]);
+
   // 检查是否是404错误（无法合成的emoji组合）
-  const isNotFoundError = error?.message?.includes('404');
+  const isNotFoundError = error?.message?.includes('这两个Emoji无法合成');
   
   if (loading) {
     return (
@@ -45,17 +54,28 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
   return (
     <div className="flex flex-col items-center">
       {/* 显示合成后的图片 - 缩小尺寸 */}
-      <div className="p-2 flex items-center justify-center">
+      <div className="p-2 flex items-center justify-center relative">
+        {/* 图片加载中的动画 */}
+        {imageLoading && result.url && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
+          </div>
+        )}
+        
         {result.url ? (
           <img 
             src={result.url} 
             alt="合成的Emoji" 
-            className="max-h-48 max-w-full object-contain" // 从max-h-64改为max-h-48
+            className="max-h-48 max-w-full object-contain" 
             style={{
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+              opacity: imageLoading ? 0.3 : 1,
+              transition: 'opacity 0.3s ease'
             }}
+            onLoad={() => setImageLoading(false)}
             onError={(e) => {
-              e.currentTarget.src = "https://via.placeholder.com/150?text=加载失败"; // 也缩小了占位图
+              setImageLoading(false);
+              e.currentTarget.src = "https://via.placeholder.com/150?text=加载失败"; 
             }}
           />
         ) : (
