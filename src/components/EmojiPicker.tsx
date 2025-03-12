@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data/sets/14/google.json'
 import { getGoogleEmojiImage, getDynamicEmojiUrl } from '../utils/emojiUtils';
 
 interface EmojiPickerProps {
@@ -189,6 +190,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
               </div>
               <div className="emoji-mart-container">
                 <Picker 
+                  data={data}
                   onEmojiSelect={handleEmojiSelect}
                   perLine={8}
                   set="google"  
