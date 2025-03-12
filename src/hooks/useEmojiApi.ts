@@ -18,7 +18,7 @@ interface EmojiSet {
 }
 
 // 常量配置
-const CACHE_SET_COUNT = 5;  // 缓存5组完整的emoji套件
+const CACHE_SET_COUNT = 10;  // 缓存5组完整的emoji套件
 
 export const useEmojiApi = (): UseFusionResult => {
   // 普通emoji合成状态
