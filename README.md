@@ -1,3 +1,4 @@
+![emoji-fusion](https://socialify.git.ci/USYDShawnTan/emoji-fusion/image?description=1&font=Jost&forks=1&issues=1&language=1&logo=https%3A%2F%2Femoji.433200.xyz%2Ffavicon.svg&name=1&pattern=Circuit+Board&pulls=1&stargazers=1&theme=Light)
 # Emoji Fusion 表情融合
 
 这是一个互动性强的网页应用，允许用户将两个表情符号融合成一个全新的创意表情！应用基于 React 构建，使用 Tailwind CSS 设计，并集成了 Three.js 实现量子粒子特效。
