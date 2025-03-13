@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data/sets/15/google.json'
-import { getGoogleEmojiImage, getDynamicEmojiUrl } from '../utils/emojiUtils';
+import { getEmojiSvgUrl, getDynamicEmojiUrl } from '../utils/emojiUtils';
 
 interface EmojiPickerProps {
   selectedEmoji: string;
@@ -47,7 +47,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ selectedEmoji, onEmojiSelect,
       setLoading(true);
       
       // 设置Google风格的静态emoji图片URL
-      const staticUrl = getGoogleEmojiImage(selectedEmoji);
+      const staticUrl = getEmojiSvgUrl(selectedEmoji);
       setStaticEmojiUrl(staticUrl);
       
       // 设置动态emoji URL

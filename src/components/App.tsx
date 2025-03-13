@@ -7,7 +7,7 @@ import useEmojiApi from '../hooks/useEmojiApi';
 const App: React.FC = () => {
   const [selectedEmoji1, setSelectedEmoji1] = useState<string>('');
   const [selectedEmoji2, setSelectedEmoji2] = useState<string>('');
-  const { loading, error, fusionResult, fusionEmoji, randomMix, cacheInfo } = useEmojiApi();
+  const { loading, error, fusionResult, fusionEmoji, randomMix, cacheInfo, clearResult } = useEmojiApi();
   const [isRandomHovered, setIsRandomHovered] = useState(false);
   
   // 使用useRef保存一个标志，表示是否已经进行过合成
@@ -22,7 +22,10 @@ const App: React.FC = () => {
   // 存储随机生成的结果，以便在假加载后使用
   const pendingRandomResult = useRef<{emoji1: string, emoji2: string, resultUrl: string} | null>(null);
 
-  // 监听两个emoji的变化，自动触发融合逻辑
+  // 判断是否已经有合成结果
+  const hasResult = !!fusionResult && selectedEmoji1 && selectedEmoji2;
+
+  // 关键修复：监听两个emoji的变化，但避免与预加载URL冲突
   useEffect(() => {
     const emoji1Changed = prevEmoji1.current !== selectedEmoji1;
     const emoji2Changed = prevEmoji2.current !== selectedEmoji2;
@@ -36,29 +39,49 @@ const App: React.FC = () => {
     }
     
     // 如果不是骰子操作（骰子操作会单独处理）
-    if (hasFusedOnce.current && !isFakeLoading) {
+    if (hasFusedOnce.current && !isFakeLoading && !loading) {  // 确保不在加载中
       const timer = setTimeout(() => {
+        // 只有当不是骰子操作且状态正常时才进行合成
         fusionEmoji(selectedEmoji1, selectedEmoji2);
       }, 300);
       
       return () => clearTimeout(timer);
     }
-  }, [selectedEmoji1, selectedEmoji2, fusionEmoji, isFakeLoading]);
+  }, [selectedEmoji1, selectedEmoji2, fusionEmoji, isFakeLoading, loading]);
 
-  // 手动触发融合
-  const handleManualFusion = () => {
+  // 修改后的手动触发函数：根据当前状态决定是合成还是清除
+  const handleManualAction = () => {
+    // 如果已经有合成结果，则清除
+    if (hasResult && !loading && !isFakeLoading) {
+      // 清除所有状态
+      setSelectedEmoji1('');
+      setSelectedEmoji2('');
+      clearResult();
+      hasFusedOnce.current = false;
+      return;
+    }
+    
+    // 否则执行合成操作
     if (selectedEmoji1 && selectedEmoji2 && !loading && !isFakeLoading) {
       hasFusedOnce.current = true;
       fusionEmoji(selectedEmoji1, selectedEmoji2);
     }
   };
 
-  // 判断是否可以进行合成
-  const canFuse = selectedEmoji1 && selectedEmoji2 && !loading && !isFakeLoading;
+  // 判断是否可以进行操作（合成或清除）
+  const canPerformAction = (hasResult || (selectedEmoji1 && selectedEmoji2)) && !loading && !isFakeLoading;
   
-  // 修改后的随机合成函数，添加假加载效果
+  // 重构：随机合成函数，正确利用预加载URL
   const handleRandomFusion = () => {
     if (loading || isFakeLoading) return; // 防止重复点击
+    
+    // 如果已经有合成结果，先清除
+    if (hasResult) {
+      setSelectedEmoji1('');
+      setSelectedEmoji2('');
+      clearResult();
+      hasFusedOnce.current = false;
+    }
     
     // 设置假加载状态
     setIsFakeLoading(true);
@@ -72,19 +95,20 @@ const App: React.FC = () => {
       
       // 模拟加载过程
       setTimeout(() => {
-        // 假加载结束后，设置emoji并显示结果
-        setSelectedEmoji1(randomResult.emoji1);
-        setSelectedEmoji2(randomResult.emoji2);
-        hasFusedOnce.current = true;
-        
-        // 直接设置结果，跳过正常的API调用
-        // 但使用setTimeout让UI有时间更新
-        setTimeout(() => {
-          // 使用自定义函数来处理随机结果
-          handleRandomResult(randomResult);
+        try {
+          // 重要修复：先调用fusionEmoji，再设置emoji状态
+          // 这样可以避免状态更新触发不必要的useEffect
+          fusionEmoji(randomResult.emoji1, randomResult.emoji2, randomResult.resultUrl);
+          
+          // 假加载结束后，设置emoji显示
+          setSelectedEmoji1(randomResult.emoji1);
+          setSelectedEmoji2(randomResult.emoji2);
+          hasFusedOnce.current = true;
+        } finally {
+          // 确保无论如何都重置加载状态
           setIsFakeLoading(false);
-        }, 50);
-      }, Math.random() * 150 + 150); // 随机延迟150-300ms
+        }
+      }, Math.random() * 50 + 60); // 随机时间模拟加载
     } else {
       console.warn("⚠️ 缓存为空，无法使用随机组合");
       // 即使没有缓存，也结束假加载状态
@@ -92,14 +116,6 @@ const App: React.FC = () => {
         setIsFakeLoading(false);
       }, 300);
     }
-  };
-  
-  // 处理随机结果的特殊函数
-  const handleRandomResult = (result: {emoji1: string, emoji2: string, resultUrl: string}) => {
-    // 这里我们需要直接设置结果，而不是通过API调用
-    // 可以通过修改useEmojiApi的fusionEmoji函数来实现
-    // 或者在这里直接操作状态
-    fusionEmoji(result.emoji1, result.emoji2)
   };
 
   return (
@@ -129,7 +145,6 @@ const App: React.FC = () => {
                 selectedEmoji={selectedEmoji2} 
                 onEmojiSelect={setSelectedEmoji2}
                 label="第二个Emoji"
-
               />
             </div>
           </div>
@@ -140,8 +155,6 @@ const App: React.FC = () => {
               onClick={handleRandomFusion}
               onMouseEnter={() => setIsRandomHovered(true)}
               onMouseLeave={() => setIsRandomHovered(false)}
-              // 修改：不再禁用按钮
-              // disabled={loading || !cacheInfo.ready}
               style={{ transform: isRandomHovered ? "scale(1.2)" : "scale(1)" }}
               className={`p-3 rounded-full transition-all duration-300 ${
                 loading || isFakeLoading
@@ -155,20 +168,20 @@ const App: React.FC = () => {
                 className={`w-6 h-6 ${(loading || isFakeLoading) ? 'animate-pulse' : ''}`}
               />
             </button>
-            
-
           </div>
           
-          {/* 合成按钮 */}
+          {/* 合成/清除按钮 */}
           <div className="flex justify-center items-center mt-8">
             <button 
-              onClick={handleManualFusion}
-              disabled={!canFuse}
+              onClick={handleManualAction}
+              disabled={!canPerformAction}
               className={`
                 py-3 px-8 rounded-full text-lg font-bold flex items-center justify-center
                 transition-all duration-200 w-48 transform hover:scale-[1.1]
-                ${canFuse 
-                  ? "bg-purple-600 hover:bg-purple-700 text-white shadow-md" 
+                ${canPerformAction
+                  ? hasResult 
+                    ? "bg-red-500 hover:bg-red-600 text-white shadow-md" 
+                    : "bg-purple-600 hover:bg-purple-700 text-white shadow-md"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"}
               `}
             >
@@ -179,6 +192,10 @@ const App: React.FC = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   🌟 合成中~
+                </>
+              ) : hasResult ? (
+                <>
+                  🧹 清除结果
                 </>
               ) : (
                 <>

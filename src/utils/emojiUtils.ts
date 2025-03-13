@@ -179,68 +179,17 @@ const unicodeToEmoji = (code: string): string => {
 // ----- 图片 URL 生成 -----
 
 /**
- * 获取 Google 风格的静态 Emoji 图片 URL
- * 例如: "☹️" => "https://cdn.jsdelivr.net/npm/emoji-datasource-google@15.0.0/img/google/64/2639-fe0f.png"
- * 提供国内友好的备用 CDN
+ * 获取 Google Noto Emoji SVG URL
+ * 例如: "☹️" => "https://fonts.gstatic.com/s/e/notoemoji/latest/2639/emoji.svg"
  */
-export const getGoogleEmojiImage = (emoji: string): string | null => {
+export const getEmojiSvgUrl = (emoji: string): string | null => {
   try {
-    const codePointStr = getCompleteEmojiUnicode(emoji);
-    if (!codePointStr) return null;
+    const mainUnicode = getMainEmojiUnicode(emoji);
+    if (!mainUnicode) return null;
     
-    // CDN 列表，按优先级排序
-    const cdnUrls = [
-      // 主要 CDN - jsdelivr (全球通用，国内速度尚可)
-      `https://cdn.jsdelivr.net/npm/emoji-datasource-google@15.0.1/img/google/64/${codePointStr}.png`,
-      
-      // 国内友好的备用 CDN
-      `https://fastly.jsdelivr.net/npm/emoji-datasource-google@15.0.1/img/google/64/${codePointStr}.png`,
-      `https://cdn.staticfile.org/emoji-datasource-google/15.0.1/img/google/64/${codePointStr}.png`,
-
-    ];
-
-    // 缓存检查结果，避免重复请求
-    const cachedKey = `emoji-cdn-${codePointStr}`;
-    const cachedUrl = localStorage.getItem(cachedKey);
-    if (cachedUrl) return cachedUrl;
-    
-    // 创建一个加载图片的 Promise
-    const loadImage = (url: string): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(url);
-        img.onerror = () => reject();
-        img.src = url;
-      });
-    };
-
-    // 并行请求所有 CDN
-    Promise.race(cdnUrls.map(url => loadImage(url)))
-      .then(fastestUrl => {
-        // 缓存最快的 URL (24小时)
-        localStorage.setItem(cachedKey, fastestUrl);
-        localStorage.setItem(`${cachedKey}-timestamp`, Date.now().toString());
-      })
-      .catch(console.error);
-
-    // 清理过期缓存
-    const now = Date.now();
-    const cacheExpiry = 24 * 60 * 60 * 1000; // 24小时
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('emoji-cdn-') && key.endsWith('-timestamp')) {
-        const timestamp = parseInt(localStorage.getItem(key) || '0');
-        if (now - timestamp > cacheExpiry) {
-          const cacheKey = key.replace('-timestamp', '');
-          localStorage.removeItem(cacheKey);
-          localStorage.removeItem(key);
-        }
-      }
-    });
-
-    // 返回首选CDN作为默认值，等待并行请求完成
-    return cdnUrls[0];
+    return `https://fonts.gstatic.com/s/e/notoemoji/latest/${mainUnicode}/emoji.svg`;
   } catch (e) {
-    console.error("Error getting Google emoji image:", e);
+    console.error("Error getting emoji SVG URL:", e);
     return null;
   }
 };
