@@ -14,7 +14,6 @@ const EmojiQuantumField: React.FC<EmojiQuantumFieldProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
-  const particlesRef = useRef<THREE.Points | null>(null);
   const mousePosition = useRef<THREE.Vector2>(new THREE.Vector2(0, 0));
   
   // 初始化场景和渲染
@@ -62,11 +61,19 @@ const EmojiQuantumField: React.FC<EmojiQuantumFieldProps> = ({
     
     // 扩展Emoji列表到至少20个
     const emojis = [
-      '😀', '🎉', '💖', '🚀', '✨', '🌈', '🍕', '🎮', '🌸', '🔥', '🎲', 
-      '😍', '🥳', '🤩', '🦄', '🍦', '🎨', '🎯', '🎪', '🧩', '🎸', '🦋',
-      '🍭', '🌟', '🦁', '🌵', '🏝️', '🌮', '🧠', '🎁'
+      // 基础表情
+      '😀', '😍', '🤩', '😎', '🥳', '🤔', '😇', '🤣', 
+      // 物品和食物
+      '🎉', '🎁', '💖', '🦄', '🍕', '🍦', '🍭', '🌮', 
+      // 自然和天气
+      '🌈', '✨', '🔥', '🌸', '🦋', '🌵', '🌟', '❄️',
+      // 活动和兴趣
+      '🚀', '🎮', '🎯', '🎪', '🧩', '🎸', '🎨', '⚽',
+      // 地点和动物
+      '🏝️', '🦁', '🐢', '🐬', '🌍', '🏔️', '🌊', '🐼',
+      // 科技和物品
+      '💻', '📱', '🤖', '👾', '🧠', '💡', '🔮', '📚'
     ];
-    const textureLoader = new THREE.TextureLoader();
     
     // 创建粒子材质集合
     const materials: THREE.PointsMaterial[] = [];
