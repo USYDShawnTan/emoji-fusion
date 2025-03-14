@@ -2,8 +2,6 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { loadEmojiData, generateRandomEmojiLink, generateEmojiLink, getDynamicEmojiUrl } from '../utils/emojiUtils';
-import path from 'path';
-import fs from 'fs/promises';
 import fetch from 'node-fetch';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,16 +9,6 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-// 创建缓存目录
-const CACHE_DIR = join(__dirname, '../../cache');
-(async () => {
-  try {
-    await fs.mkdir(CACHE_DIR, { recursive: true });
-  } catch (err) {
-    console.error('创建缓存目录失败:', err);
-  }
-})();
 
 // 中间件：解析 JSON 请求体
 app.use(express.json());
@@ -46,33 +34,26 @@ app.use(express.json());
   }
 })();
 
-// 辅助函数：获取并缓存外部图片
-async function getAndCacheImage(url: string, cacheKey: string) {
-  const cachePath = join(CACHE_DIR, `${cacheKey}.png`);
-  
+// 辅助函数：获取图片并直接发送
+async function fetchAndSendImage(url: string, res: express.Response) {
   try {
-    // 检查缓存中是否已存在
-    try {
-      await fs.access(cachePath);
-      return cachePath; // 缓存中存在，直接返回路径
-    } catch (error) {
-      // 缓存中不存在，继续获取
-    }
-    
     // 获取远程图片
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`获取图片失败: ${response.status}`);
     }
     
-    // 将图片保存到缓存
-    const buffer = await response.buffer();
-    await fs.writeFile(cachePath, buffer);
+    // 获取内容类型
+    const contentType = response.headers.get('content-type') || 'image/png';
     
-    return cachePath;
+    // 设置响应头
+    res.setHeader('Content-Type', contentType);
+    
+    // 直接将图片数据流传递给客户端
+    response.body.pipe(res);
   } catch (error) {
-    console.error(`缓存图片失败 (${url}):`, error);
-    return null;
+    console.error(`获取图片失败 (${url}):`, error);
+    res.status(500).send('获取图片失败');
   }
 }
 
@@ -87,17 +68,8 @@ app.get('/api/random', async (req, res) => {
     // 根据 format 参数返回不同格式
     const format = req.query.format as string;
     if (format === 'pic') {
-      // 获取并缓存图片
-      const cacheKey = `random_${result.emoji1}_${result.emoji2}`;
-      const imagePath = await getAndCacheImage(result.url, cacheKey);
-      
-      if (imagePath) {
-        // 直接返回图片文件
-        return res.sendFile(imagePath);
-      } else {
-        // 如果缓存失败，则重定向
-        return res.redirect(result.url);
-      }
+      // 直接获取图片并发送
+      return fetchAndSendImage(result.url, res);
     }
     
     // 默认返回 JSON 格式的图片信息
@@ -129,17 +101,8 @@ app.get('/api/:combination', async (req, res) => {
       // 根据 format 参数返回不同格式
       const format = req.query.format as string;
       if (format === 'pic') {
-        // 获取并缓存图片
-        const cacheKey = `single_${combination}`;
-        const imagePath = await getAndCacheImage(result, cacheKey);
-        
-        if (imagePath) {
-          // 直接返回图片文件
-          return res.sendFile(imagePath);
-        } else {
-          // 如果缓存失败，则重定向
-          return res.redirect(result);
-        }
+        // 直接获取图片并发送
+        return fetchAndSendImage(result, res);
       }
       
       // 默认返回 JSON 格式的图片信息
@@ -162,17 +125,8 @@ app.get('/api/:combination', async (req, res) => {
     // 根据 format 参数返回不同格式
     const format = req.query.format as string;
     if (format === 'pic') {
-      // 获取并缓存图片
-      const cacheKey = `combined_${emoji1}_${emoji2}`;
-      const imagePath = await getAndCacheImage(result, cacheKey);
-      
-      if (imagePath) {
-        // 直接返回图片文件
-        return res.sendFile(imagePath);
-      } else {
-        // 如果缓存失败，则重定向
-        return res.redirect(result);
-      }
+      // 直接获取图片并发送
+      return fetchAndSendImage(result, res);
     }
     
     // 默认返回 JSON 格式的图片信息
@@ -182,9 +136,6 @@ app.get('/api/:combination', async (req, res) => {
     res.status(500).json({ error: '服务器内部错误' });
   }
 });
-
-// 开放访问缓存目录中的图片
-app.use('/cache', express.static(CACHE_DIR));
 
 // 在开发环境下，代理到Vite服务器
 if (process.env.NODE_ENV === 'development') {

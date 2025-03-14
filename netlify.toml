@@ -2,7 +2,21 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 [dev]
   command = "npm run dev"
   port = 5173
+  targetPort = 3000
+
+# 为API路由设置重定向规则
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# 所有其他路由返回到前端
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
