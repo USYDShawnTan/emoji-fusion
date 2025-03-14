@@ -7,6 +7,16 @@ export default defineConfig({
     react(),
     visualizer() // 分析打包大小
   ],
+  server: {
+    open: true,
+    proxy: {
+      // 将API请求代理到Express服务器
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {
@@ -18,8 +28,5 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000, // 调整大小警告阈值
-  },
-  server: {
-    open: true
   }
 });
