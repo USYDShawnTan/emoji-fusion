@@ -19,7 +19,7 @@ const EmojiSelectionSection: React.FC<EmojiSelectionSectionProps> = ({
   
       
       {/* 选择区域 */}
-      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+      <div className="flex items-center justify-center gap-6 md:gap-10">
         <div className="w-[150px]">
           <EmojiPicker 
             selectedEmoji={selectedEmoji1} 
