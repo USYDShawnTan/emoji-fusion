@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface FusionResultProps {
   loading: boolean;
@@ -9,6 +9,8 @@ interface FusionResultProps {
 const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [showImage, setShowImage] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
   
   // 当result变化时，重置状态
   useEffect(() => {
@@ -19,6 +21,41 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
       setTimeout(() => setShowImage(true), 100);
     }
   }, [result?.url]);
+  
+  // 复制图片的函数
+  const handleCopyImage = async () => {
+    if (imageRef.current && !imageLoading) {
+      try {
+        // 模拟右键菜单中的"复制图片"功能
+        const imgElement = imageRef.current;
+        
+        // 创建一个canvas元素
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+        
+        // 在canvas上绘制图像
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(imgElement, 0, 0);
+        
+        // 转换canvas为blob并复制到剪贴板
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const data = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([data]);
+            setCopySuccess(true);
+            
+            // 3秒后隐藏成功提示
+            setTimeout(() => {
+              setCopySuccess(false);
+            }, 3000);
+          }
+        });
+      } catch (err) {
+        console.error('复制失败:', err);
+      }
+    }
+  };
 
   // 检查错误类型
   const isNotFoundError = error?.message?.includes('这两个Emoji无法合成');
@@ -88,21 +125,34 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
         {/* 悬浮容器 */}
         <div className="bg-white/20 backdrop-blur-md p-5 rounded-2xl shadow-glass border border-white/30 relative">
           {/* 图片加载中动画 */}
-          {imageLoading && result.url && (
+          {imageLoading && result?.url && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-sm rounded-2xl z-10">
               <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-400 border-t-transparent"></div>
             </div>
           )}
           
-          {/* 角标装饰 */}
-          <div className="absolute -top-3 -right-3 w-6 h-6 bg-secondary-500 rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-white text-xs">✨</span>
-          </div>
+          {/* 复制按钮 */}
+          <button 
+            onClick={handleCopyImage}
+            className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center shadow-lg cursor-pointer z-20"
+            title="复制图片"
+            disabled={imageLoading}
+          >
+            <span className="text-white text-lg">📋</span>
+          </button>
+          
+          {/* 复制成功提示 */}
+          {copySuccess && (
+            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm animate-fade-in z-30">
+              复制成功! ✅
+            </div>
+          )}
           
           {/* 图片容器 */}
           <div className="relative rounded-xl overflow-hidden p-4 min-h-[180px] min-w-[180px] flex items-center justify-center">
-            {result.url ? (
+            {result?.url ? (
               <img 
+                ref={imageRef}
                 src={result.url} 
                 alt="合成的Emoji" 
                 className="max-h-48 max-w-full object-contain transform transition-all duration-700 hover:scale-110" 
@@ -116,6 +166,7 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
                   setImageLoading(false);
                   e.currentTarget.src = "https://via.placeholder.com/150?text=加载失败"; 
                 }}
+                crossOrigin="anonymous" // 允许从其他域加载图片并在canvas中使用
               />
             ) : (
               <div className="flex items-center justify-center h-48 w-48 bg-white/10 rounded-lg">
