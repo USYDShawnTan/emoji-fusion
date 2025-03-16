@@ -4,8 +4,11 @@ FROM node:18-alpine AS build
 # 设置工作目录
 WORKDIR /app
 
-# 复制 package.json 和 package-lock.json
-COPY package.json package-lock.json ./
+# 复制 package.json
+COPY package.json ./
+
+# 生成 package-lock.json
+RUN npm install --package-lock-only
 
 # 安装依赖
 RUN npm ci
