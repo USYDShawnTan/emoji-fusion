@@ -4,14 +4,12 @@ FROM node:18-alpine AS builder
 # 设置工作目录
 WORKDIR /app
 
-# 配置npm镜像
-RUN npm config set registry https://registry.npmmirror.com
+# 配置npm镜像并全局安装pnpm
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm
 
-# 全局安装pnpm
-RUN npm install -g pnpm
-
-# 复制lockfile和配置
-COPY package.json pnpm-lock.yaml* ./
+# 首先只复制package.json和lockfile，利用Docker缓存层
+COPY package.json pnpm-lock.yaml* .npmrc* ./
 
 # 安装依赖
 RUN pnpm install --frozen-lockfile
@@ -39,10 +37,8 @@ COPY --from=builder /app/src/server ./src/server
 COPY --from=builder /app/src/utils ./src/utils
 COPY --from=builder /app/tsconfig.json ./
 
-# 安装生产依赖
-RUN npm install -g pnpm && \
-    pnpm install --prod --frozen-lockfile && \
-    npm uninstall -g pnpm
+# 直接使用npm安装生产依赖
+RUN npm install --omit=dev
 
 # 设置环境变量
 ENV NODE_ENV=production \
