@@ -2,6 +2,9 @@
  * Emoji 工具类 - 提供 Emoji 处理、合成、显示相关的功能
  */
 
+// 导入本地 JSON 数据
+import emojiDataJson from '../../data/emojimix_data.json';
+
 // 数据类型定义
 interface EmojiData {
   baseUrl: string;
@@ -30,24 +33,23 @@ export const loadEmojiData = async (): Promise<void> => {
   if (isDataLoading) return dataLoadingPromise as Promise<void>;
   
   isDataLoading = true;
-  dataLoadingPromise = fetch('https://raw.githubusercontent.com/USYDShawnTan/emojimix/refs/heads/main/emojimix_data.json')
-    .then(response => {
-      if (!response.ok) throw new Error('Failed to load emoji data');
-      return response.json();
-    })
-    .then(data => {
-      emojiData = data;
-      combinationIndex = buildCombinationIndex(data);
-      cachedValidCombinations = Object.keys(combinationIndex);
-      isDataLoading = false;
-    })
-    .catch(error => {
-      console.error("Failed to load emoji data:", error);
-      isDataLoading = false;
-      throw error;
-    });
   
-  return dataLoadingPromise;
+  try {
+    // 直接使用导入的数据，无需网络请求
+    emojiData = emojiDataJson as EmojiData;
+    combinationIndex = buildCombinationIndex(emojiData);
+    cachedValidCombinations = Object.keys(combinationIndex);
+    isDataLoading = false;
+    
+    // 创建一个已解析的 Promise 以保持接口一致
+    dataLoadingPromise = Promise.resolve();
+    return dataLoadingPromise;
+  } catch (error) {
+    console.error("Failed to load emoji data:", error);
+    isDataLoading = false;
+    dataLoadingPromise = Promise.reject(error);
+    throw error;
+  }
 };
 
 /**
