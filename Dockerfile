@@ -6,13 +6,16 @@ WORKDIR /app
 
 # 配置npm镜像并全局安装pnpm
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g pnpm
+    npm install -g pnpm@latest
 
-# 首先只复制package.json和lockfile，利用Docker缓存层
-COPY package.json pnpm-lock.yaml* .npmrc* ./
+# 首先只复制package.json和.npmrc，利用Docker缓存层
+COPY package.json .npmrc* ./
 
-# 安装依赖
-RUN pnpm install --no-frozen-lockfile
+# 修复有问题的依赖版本
+RUN sed -i 's/"cross-env": "7.0.5"/"cross-env": "7.0.3"/g' package.json
+
+# 安装依赖（不使用frozen-lockfile）
+RUN pnpm install
 
 # 复制源代码
 COPY . .
@@ -32,12 +35,11 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 复制构建产物和必要文件
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml* ./
 COPY --from=builder /app/src/server ./src/server
 COPY --from=builder /app/src/utils ./src/utils
 COPY --from=builder /app/tsconfig.json ./
 
-# 直接使用npm安装生产依赖
+# 安装生产依赖（使用npm而非pnpm，因为只需要在此阶段使用一次）
 RUN npm install --omit=dev
 
 # 设置环境变量
