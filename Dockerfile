@@ -12,7 +12,7 @@ RUN npm config set registry https://registry.npmmirror.com && \
 COPY package.json pnpm-lock.yaml* .npmrc* ./
 
 # 安装依赖
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # 复制源代码
 COPY . .
