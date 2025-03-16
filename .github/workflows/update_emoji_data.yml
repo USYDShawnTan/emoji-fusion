@@ -18,17 +18,33 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           pip install requests
 
-      - name: Run update script
-        run: python update_emoji_data.py
+      - name: Run update script with retry
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: python data/update_emoji_data.py
+
+      - name: Validate generated JSON
+        run: |
+          python -c "import json; json.load(open('data/emojimix_data.json'))"
 
       - name: Check if there are changes
         id: check_changes
         run: |
-          git add emojimix_data.json metadata_hash.txt
+          git add data/emojimix_data.json data/metadata_hash.txt
           git diff --cached --exit-code || echo "has_changes=true" >> $GITHUB_ENV
 
       - name: Commit and push changes
@@ -52,6 +68,18 @@ jobs:
         with:
           tag_name: "v${{ env.release_date }}"  # 使用当天日期作为版本号
           name: "Release v${{ env.release_date }}"
-          files: emojimix_data.json
+          files: data/emojimix_data.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Emoji data update failed',
+              body: 'The emoji data update workflow failed. Please check the logs.'
+            })
