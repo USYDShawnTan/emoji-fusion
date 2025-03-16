@@ -6,8 +6,17 @@ import fetch from 'node-fetch';
 import cors from 'cors';
 import fs from 'fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// 安全地获取当前目录，兼容 Netlify Functions 环境
+let __dirname;
+try {
+  // 尝试使用 ESM 方式获取目录
+  const __filename = fileURLToPath(import.meta.url);
+  __dirname = dirname(__filename);
+} catch (error) {
+  // 在 Netlify Functions 等环境中，使用 process.cwd()
+  console.log('使用 process.cwd() 作为备选目录解析方法');
+  __dirname = process.cwd();
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
