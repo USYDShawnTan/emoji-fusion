@@ -1,7 +1,15 @@
 ![emoji-fusion](https://socialify.git.ci/USYDShawnTan/emoji-fusion/image?description=1&font=Jost&forks=1&issues=1&language=1&logo=https%3A%2F%2Femoji.433200.xyz%2Ffavicon.svg&name=1&pattern=Circuit+Board&pulls=1&stargazers=1&theme=Light)
-# Emoji Fusion 表情融合
+
+# Emoji Fusion 表情融合 [![Docker Build](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/docker-publish.yml) [![Emoji Data Update](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/update_emoji_data.yml/badge.svg)](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/update_emoji_data.yml)
 
 这是一个互动性强的网页应用，允许用户将两个表情符号融合成一个全新的创意表情！应用基于 React 构建，使用 Tailwind CSS 设计，并集成了 Three.js 实现量子粒子特效。
+
+## 🚀 特性
+
+- **自动更新**: 每日自动更新最新的emoji组合数据
+- **多平台支持**: Docker镜像支持 AMD64 和 ARM64 架构
+- **生产就绪**: 完整的CI/CD流程，包括自动构建、测试和部署
+- **安全性**: 集成漏洞扫描，确保容器安全
 
 ## 📢 更新: 集成服务器部署
 
@@ -33,18 +41,25 @@
 
 ## 🚀 快速开始
 
+## 🛠️ 开发环境要求
+
+- Node.js 18+
+- npm 8+
+- Docker (可选，用于容器化部署)
+- Git
+
 ### 安装
 
 1. 克隆仓库：
-   ```
+   ```bash
    git clone https://github.com/USYDShawnTan/emoji-fusion.git
    ```
 2. 进入项目目录：
-   ```
+   ```bash
    cd emoji-fusion
    ```
 3. 安装依赖：
-   ```
+   ```bash
    npm install
    ```
 
@@ -137,15 +152,53 @@ docker run -d -p 8080:80 --name emoji-fusion emoji-fusion
 - [`vite.config.ts`](./vite.config.ts): 配置构建参数
 - [`Dockerfile`](./Dockerfile): 调整Docker构建设置
 
-## 👥 贡献
+## 📁 项目结构
 
-欢迎提交问题或拉取请求，以改进项目功能或修复 bug。请遵循以下步骤：
+```
+emoji-fusion/
+├── src/
+│   ├── components/     # React组件
+│   ├── hooks/         # 自定义Hooks
+│   ├── utils/         # 工具函数
+│   └── server/        # Express服务器
+├── data/              # Emoji数据和更新脚本
+├── public/            # 静态资源
+└── .github/           # GitHub Actions工作流
+```
 
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add some amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 打开 Pull Request
+## 🔧 性能优化
+
+- **图片预加载**: 智能预加载常用emoji组合
+- **响应式缓存**: 实现多层缓存策略
+- **代码分割**: 使用动态导入优化加载时间
+- **Docker层优化**: 优化Docker镜像大小和构建时间
+- **CDN加速**: 支持通过CDN分发静态资源
+
+## 👥 贡献指南
+
+1. Fork本仓库并克隆到本地
+2. 创建新分支：
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. 进行修改并测试
+4. 提交变更：
+   ```bash
+   git commit -m 'feat: add amazing feature'
+   ```
+   请遵循[约定式提交](https://www.conventionalcommits.org/)规范
+5. 推送到分支：
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+6. 打开Pull Request
+
+### 开发流程
+
+- 确保代码通过所有测试
+- 遵循项目的代码风格和最佳实践
+- 更新相关文档
+- 添加必要的测试用例
 
 ## 📄 许可证
 
