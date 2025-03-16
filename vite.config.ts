@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
+  base: '/emoji-fusion/',  // 添加 base URL for GitHub Pages
   plugins: [
     react(),
     visualizer() // 分析打包大小
