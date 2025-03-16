@@ -3,6 +3,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { loadEmojiData, generateRandomEmojiLink, generateEmojiLink, getDynamicEmojiUrl } from '../utils/emojiUtils';
 import fetch from 'node-fetch';
+import cors from 'cors';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,6 +14,9 @@ const port = process.env.PORT || 3000;
 
 // 中间件：解析 JSON 请求体
 app.use(express.json());
+
+// 添加CORS支持
+app.use(cors());
 
 /**
  * API 路由说明：
@@ -137,16 +142,62 @@ app.get('/api/:combination', async (req, res) => {
   }
 });
 
-// 在开发环境下，代理到Vite服务器
+// 环境配置
 if (process.env.NODE_ENV === 'development') {
   console.log('🔄 开发环境：使用API服务器');
 } else {
-  // 在生产环境，提供静态文件服务
-  app.use(express.static(join(__dirname, '../../../dist')));
+  console.log('🚀 生产环境：提供API和静态文件服务');
+  
+  console.log('当前目录:', process.cwd());
+  console.log('__dirname:', __dirname);
+  
+  // 尝试多个可能的dist位置
+  const possibleDistPaths = [
+    join(__dirname, '../../../dist'),  // 开发环境相对路径
+    join(__dirname, '../../dist'),     // 可能的Docker路径
+    join(process.cwd(), 'dist'),       // 当前工作目录下的dist
+    '/app/dist'                        // Docker中的绝对路径
+  ];
+
+  // 查找存在的dist路径
+  let distPath = possibleDistPaths.find(path => {
+    try {
+      return fs.existsSync(path);
+    } catch {
+      return false;
+    }
+  });
+
+  if (!distPath) {
+    console.error('❌ 无法找到dist目录，使用默认路径');
+    distPath = join(__dirname, '../../../dist');
+  }
+
+  console.log('✅ 找到静态文件路径:', distPath);
+  
+  // 设置缓存控制
+  app.use(
+    express.static(distPath, {
+      maxAge: '1d', // 为静态资源设置1天缓存
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+          // HTML文件不缓存
+          res.setHeader('Cache-Control', 'no-cache');
+        }
+      }
+    })
+  );
 
   // 处理所有其他路由，提供index.html
   app.get('*', (req, res) => {
-    res.sendFile(join(__dirname, '../../../dist/index.html'));
+    // 排除API路由
+    if (!req.path.startsWith('/api/')) {
+      const indexPath = join(distPath, 'index.html');
+      console.log('📄 请求index.html路径:', indexPath);
+      console.log('  此路径是否存在:', fs.existsSync(indexPath));
+      
+      res.sendFile(indexPath);
+    }
   });
 }
 

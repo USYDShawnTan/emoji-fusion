@@ -3,6 +3,16 @@
 
 这是一个互动性强的网页应用，允许用户将两个表情符号融合成一个全新的创意表情！应用基于 React 构建，使用 Tailwind CSS 设计，并集成了 Three.js 实现量子粒子特效。
 
+## 📢 更新: 集成服务器部署
+
+最新更新改进了部署架构，使用Express服务器同时提供API和静态文件服务，使Docker容器更加简洁高效：
+
+- **简化架构**：单一服务器处理前端和API
+- **简化部署**：不再需要复杂的Nginx反向代理配置
+- **集成式容器**：Docker容器现在包含完整应用（前端 + 后端）
+
+在开发环境中，前端和后端仍然分开运行（利用Vite的代理功能），而在生产环境中，Express服务器同时处理所有内容。
+
 ## ✨ 功能特点
 
 - 丰富的表情符号选择器，支持各类标准 emoji
@@ -16,9 +26,10 @@
 - **前端框架**: React 18 + TypeScript
 - **样式**: Tailwind CSS
 - **3D 渲染**: Three.js (量子粒子场效果)
+- **后端**: Express.js (提供API和静态文件服务)
 - **构建工具**: Vite
 - **打包优化**: Rollup 代码分割
-- **部署选项**: Netlify, Docker/Nginx
+- **部署选项**: Netlify, Docker 集成服务器
 
 ## 🚀 快速开始
 
@@ -45,7 +56,7 @@
 npm run dev
 ```
 
-应用将在 `http://localhost:5173` 上运行
+应用将在 `http://localhost:5173` 上运行，API服务器将在 `http://localhost:3000` 上运行
 
 ### 构建生产版本
 
@@ -55,45 +66,34 @@ npm run build
 
 构建产物将输出到 `dist` 目录
 
-## 🐳 Docker 部署
+### 运行生产服务器
 
-### 使用预构建镜像（最简单）
+```
+# 构建前端应用
+npm run build
 
-可以直接从 Docker Hub 拉取预构建的镜像：
-
-```bash
-# 拉取镜像
-docker pull xiaotanyyds/emoji-fusion:latest
-
-# 运行容器
-docker run -d -p 8080:80 --name emoji-fusion xiaotanyyds/emoji-fusion
+# 启动生产服务器
+npm run start
+# 或指定端口
+npm run start:prod 
 ```
 
-应用将在 http://localhost:8080 上可用。
+注意：项目使用cross-env来确保环境变量在Windows、macOS和Linux上都能正确设置。
+
+## 🐳 Docker 部署
 
 ### 使用 Docker Compose
 
 1. 确保已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)
 
-2. 创建 `docker-compose.yml` 文件或使用项目中已有的配置：
-
-   ```yaml
-   version: "3"
-   services:
-     emoji-fusion:
-       image: xiaotanyyds/emoji-fusion:latest
-       # 或者从源码构建
-       # build: .
-       ports:
-         - "8080:80"
-       restart: unless-stopped
-   ```
-
-3. 运行容器：
+2. 使用项目中的 `docker-compose.yml` 配置：
 
    ```bash
+   # 构建并启动容器
    docker-compose up -d
    ```
+
+3. 应用将在 http://localhost:8080 上可用。
 
 ### 自定义构建
 
@@ -111,7 +111,17 @@ docker run -d -p 8080:80 --name emoji-fusion emoji-fusion
 
 ## 🌐 API 说明
 
-本应用使用 Google Emoji Kitchen API 技术，但不依赖外部服务器。应用通过 `useEmojiApi` Hook 处理表情融合逻辑：
+本应用使用了Express后端提供的API：
+
+- `/api/random` - 随机组合两个表情
+- `/api/:combination` - 合成两个特定表情 (格式: emoji1+emoji2)
+- `/api/:emoji` - 获取单个表情
+
+每个端点支持两种返回格式：
+- 默认: 返回JSON格式的图片信息
+- 图片: 添加`?format=pic`参数，直接返回图片
+
+前端通过 `useEmojiApi` Hook 处理表情融合逻辑：
 
 - 预加载常用表情组合，提供顺畅用户体验
 - 通过缓存机制减少数据请求，优化性能
@@ -125,7 +135,7 @@ docker run -d -p 8080:80 --name emoji-fusion emoji-fusion
 
 - [`tailwind.config.js`](./tailwind.config.js): 调整样式主题
 - [`vite.config.ts`](./vite.config.ts): 配置构建参数
-- [`nginx.conf`](./nginx.conf): 自定义部署设置
+- [`Dockerfile`](./Dockerfile): 调整Docker构建设置
 
 ## 👥 贡献
 

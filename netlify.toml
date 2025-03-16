@@ -20,3 +20,11 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# 添加Node.js版本设置
+[build.environment]
+  NODE_VERSION = "18"
+
+# 确保Netlify支持ESM模块
+[functions]
+  node_bundler = "esbuild"
