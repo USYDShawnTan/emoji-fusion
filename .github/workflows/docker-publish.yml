@@ -8,7 +8,8 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ${{ github.repository }}
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/emoji-fusion
 
 jobs:
   build-and-push:
@@ -75,6 +76,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.IMAGE_NAME }}
+          repository: emoji-fusion
           short-description: "Emoji Fusion - An interactive web application for combining emojis using Google's Emoji Kitchen"
           readme-filepath: ./README.md
