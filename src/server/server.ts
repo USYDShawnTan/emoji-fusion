@@ -162,20 +162,30 @@ if (process.env.NODE_ENV === 'development') {
   
   // 尝试多个可能的dist位置
   const possibleDistPaths = [
-    join(__dirname, '../../../dist'),  // 开发环境相对路径
-    join(__dirname, '../../dist'),     // 可能的Docker路径
-    join(process.cwd(), 'dist'),       // 当前工作目录下的dist
-    '/app/dist'                        // Docker中的绝对路径
+    '/var/task/dist',                 // Netlify Functions 环境路径
+    join(process.cwd(), 'dist'),      // 当前工作目录下的dist
+    '/dist',                         // Netlify 根目录
+    join(__dirname, '../../../dist'), // 开发环境相对路径
+    join(__dirname, '../../dist'),    // 可能的Docker路径
+    '/app/dist'                       // Docker中的绝对路径
   ];
 
   // 查找存在的dist路径
-  let distPath = possibleDistPaths.find(path => {
+  let distPath = null;
+  console.log("尝试查找静态文件目录...");
+  
+  for (const path of possibleDistPaths) {
     try {
-      return fs.existsSync(path);
-    } catch {
-      return false;
+      console.log(`检查路径: ${path}`);
+      if (fs.existsSync(path)) {
+        distPath = path;
+        console.log(`✅ 找到有效路径: ${path}`);
+        break;
+      }
+    } catch (error) {
+      console.log(`检查路径时出错 ${path}:`, error);
     }
-  });
+  }
 
   if (!distPath) {
     console.error('❌ 无法找到dist目录，使用默认路径');

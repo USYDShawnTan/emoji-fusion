@@ -5,13 +5,11 @@ const path = require('path');
 // 设置环境变量，告诉服务器它在 Netlify Functions 环境中运行
 process.env.NETLIFY_FUNCTION = 'true';
 
-// 配置 serverless-http
+// 极简配置 serverless-http，确保兼容性
 const serverlessConfig = {
   basePath: '/.netlify/functions/api',
-  binary: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-  provider: {
-    env: process.env
-  }
+  binary: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+  // 移除所有可能造成兼容性问题的高级配置
 };
 
 // 改进的错误处理
@@ -21,9 +19,10 @@ module.exports.handler = async (event, context) => {
     console.log('Netlify函数启动，当前工作目录:', process.cwd());
     console.log('NODE_PATH:', process.env.NODE_PATH);
     
-    // 确保上下文对象存在
-    context = context || {};
-    context.callbackWaitsForEmptyEventLoop = false;
+    // 设置最低限度的上下文配置
+    if (context) {
+      context.callbackWaitsForEmptyEventLoop = false;
+    }
     
     // 动态导入Express应用
     const serverModule = await import('../../src/server/server.js');
