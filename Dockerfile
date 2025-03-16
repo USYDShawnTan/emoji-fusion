@@ -1,46 +1,59 @@
 # 构建阶段
-FROM node:18-alpine AS build
+FROM node:18-alpine AS builder
+
+# 全局安装pnpm
+RUN npm install -g pnpm
 
 # 设置工作目录
 WORKDIR /app
 
-# 复制 package.json
-COPY package.json ./
-
-# 生成 package-lock.json
-RUN npm install --package-lock-only
+# 复制包管理文件
+COPY package.json pnpm-lock.yaml* .npmrc ./
 
 # 安装依赖
-RUN npm ci
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
-# 复制所有源代码
+# 复制源代码
 COPY . .
 
-# 构建前端应用
-RUN npm run build
+# 构建应用
+RUN pnpm build
 
 # 运行阶段
 FROM node:18-alpine
 
 WORKDIR /app
 
-# 复制构建产物和服务器文件
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json ./
-COPY --from=build /app/package-lock.json ./
-COPY --from=build /app/src/server ./src/server
-COPY --from=build /app/src/utils ./src/utils
-COPY --from=build /app/tsconfig.json ./
+# 全局安装 tsx
+RUN npm install -g tsx
 
-# 只安装生产环境依赖
-RUN npm ci --production
+# 复制构建产物和必要文件
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml* ./
+COPY --from=builder /app/src/server ./src/server
+COPY --from=builder /app/src/utils ./src/utils
+COPY --from=builder /app/tsconfig.json ./
+COPY .npmrc ./
+
+# 安装生产依赖
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --prod --frozen-lockfile
+
+# 清理不必要的文件
+RUN rm -rf /root/.local/share/pnpm/store .npmrc
 
 # 设置环境变量
-ENV NODE_ENV=production
-ENV PORT=80
+ENV NODE_ENV=production \
+    PORT=80
 
-# 暴露80端口
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/api/health || exit 1
+
+# 暴露端口
 EXPOSE 80
 
 # 启动服务器
-CMD ["npx", "tsx", "src/server/server.ts"]
+CMD ["tsx", "src/server/server.ts"]
