@@ -6,6 +6,7 @@ export default defineConfig({
   description: '将两个表情符号融合成一个全新的创意表情！',
   lang: 'zh-CN',
   lastUpdated: true,
+  base: '/emoji-fusion/',
   
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
