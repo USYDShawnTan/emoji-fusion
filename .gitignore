@@ -6,7 +6,8 @@
 .pnp.js
 /cache
 /dist
-
+/.npm-cache
+/.pnpm-store
 
 # testing
 /coverage
