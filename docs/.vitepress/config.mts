@@ -7,6 +7,7 @@ export default defineConfig({
   lang: 'zh-CN',
   lastUpdated: true,
   base: '/emoji-fusion/',
+  ignoreDeadLinks: true,
   
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
