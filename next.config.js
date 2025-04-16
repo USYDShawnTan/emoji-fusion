@@ -22,6 +22,8 @@ const nextConfig = {
   serverActions: {
     allowedOrigins: ["localhost:3000"],
   },
+  output: "standalone",
+  swcMinify: true,
 };
 
 module.exports = nextConfig;

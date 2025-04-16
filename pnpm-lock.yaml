@@ -44,9 +44,6 @@ importers:
       node-fetch:
         specifier: ^2.7.0
         version: 2.7.0
-      package:
-        specifier: ^1.0.1
-        version: 1.0.1
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1864,10 +1861,6 @@ packages:
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
-
-  package@1.0.1:
-    resolution: {integrity: sha512-g6xZR6CO7okjie83sIRJodgGvaXqymfE5GLhN8N2TmZGShmHc/V23hO/vWbdnuy3D81As3pfovw72gGi42l9qA==}
-    engines: {node: '>= 0.6.0'}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -4283,8 +4276,6 @@ snapshots:
       p-limit: 3.1.0
 
   package-json-from-dist@1.0.1: {}
-
-  package@1.0.1: {}
 
   parent-module@1.0.1:
     dependencies:

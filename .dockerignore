@@ -2,7 +2,8 @@
 .git
 .gitignore
 .github
-
+node_modules
+.next
 # 开发工具配置
 .vscode
 .idea
@@ -22,6 +23,8 @@ LICENSE
 logs
 *.log
 npm-debug.log*
+.npm-cache
+.pnpm-store
 
 # 操作系统
 .DS_Store
