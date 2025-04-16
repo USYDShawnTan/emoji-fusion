@@ -1,16 +1,16 @@
 {
   "name": "emoji-fusion",
   "private": true,
-  "version": "0.0.1",
-  "description": "A project to fuse two emojis into one using React and Tailwind CSS.",
-  "main": "index.js",
-  "type": "module",
+  "version": "0.1.0",
+  "description": "A project to fuse two emojis into one using Next.js, React and Tailwind CSS.",
   "scripts": {
-    "dev": "concurrently \"vite\" \"nodemon --exec tsx src/server/server.ts\"",
-    "build": "tsc && vite build",
-    "start": "cross-env NODE_ENV=production tsx src/server/server.ts",
-    "start:prod": "cross-env NODE_ENV=production PORT=80 tsx src/server/server.ts",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "docker:build": "docker build -t emoji-fusion .",
+    "docker:run": "docker run -p 3000:3000 emoji-fusion",
+    "docker:dev": "docker-compose up"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
@@ -23,6 +23,7 @@
     "emoji-mart": "^5.6.0",
     "express": "^4.21.2",
     "gsap": "^3.12.7",
+    "next": "^14.0.0",
     "node-fetch": "^2.7.0",
     "package": "^1.0.1",
     "react": "^18.2.0",
@@ -31,27 +32,31 @@
     "three": "^0.174.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.14",
-    "concurrently": "8.2.2",
-    "cross-env": "7.0.3",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.3.0",
     "nodemon": "^3.1.9",
     "postcss": "^8.4.27",
     "rollup-plugin-visualizer": "^5.14.0",
-    "serverless-http": "^3.2.0",
     "tailwindcss": "^3.3.3",
     "tsx": "^4.19.3",
-    "typescript": "^5.0.2",
-    "vite": "^5.0.0"
+    "typescript": "^5.0.2"
   },
   "keywords": [
     "emoji",
     "fusion",
     "react",
-    "tailwindcss"
+    "tailwindcss",
+    "nextjs",
+    "docker"
   ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "author": "Xiaotan",
   "license": "MIT"
 }

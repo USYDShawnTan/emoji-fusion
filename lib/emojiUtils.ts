@@ -3,7 +3,7 @@
  */
 
 // 导入本地 JSON 数据
-import emojiDataJson from '../../data/emojimix_data.json';
+import emojiDataJson from '../data/emojimix_data.json';
 
 // 数据类型定义
 interface EmojiData {
@@ -248,111 +248,24 @@ export const generateRandomEmojiLink = (): EmojiCombination | null => {
   const combination = cachedValidCombinations[randomIndex];
   
   try {
-    // 分割组合以获取左右编码
-    const [leftCode, rightCodeWithExt] = combination.split('_');
-    const rightCode = rightCodeWithExt.replace(/\.png$/, '');
+    // 解析组合以获取原始表情符号
+    const [emojiCode1, emojiCode2] = combination.split('_');
     
+    // 转换成实际的 Emoji 表情符号
+    const emoji1 = unicodeToEmoji(emojiCode1);
+    const emoji2 = unicodeToEmoji(emojiCode2);
+    
+    // 生成 URL 并返回结果
     const date = combinationIndex[combination];
-    const url = `${emojiData.baseUrl}${date}/${leftCode}/${combination}.png`;
+    const url = `${emojiData.baseUrl}${date}/${emojiCode1}/${combination}.png`;
     
-    const emoji1 = unicodeToEmoji(leftCode);
-    const emoji2 = unicodeToEmoji(rightCode);
-    
-    return { url, emoji1, emoji2 };
+    return {
+      url,
+      emoji1,
+      emoji2
+    };
   } catch (error) {
-    console.error("Failed to process random emoji:", error);
+    console.error('生成随机 Emoji 组合时出错:', error);
     return null;
   }
-};
-
-// ----- React Hooks -----
-
-/**
- * React Hook: 用于 Emoji 合成
- */
-import { useState, useEffect } from 'react';
-
-export const useEmojiMix = (emoji1: string, emoji2: string) => {
-  const [result, setResult] = useState<{ url: string } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchMixedEmoji = async () => {
-      if (!emoji1 || !emoji2) {
-        setResult(null);
-        return;
-      }
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // 确保数据已加载
-        if (!emojiData) {
-          await loadEmojiData();
-        }
-        
-        const url = generateEmojiLink(emoji1, emoji2);
-        
-        if (url) {
-          setResult({ url });
-        } else {
-          setError("这两个Emoji无法合成");
-        }
-      } catch (err) {
-        console.error("Error during emoji fusion:", err);
-        setError("合成过程中出错");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchMixedEmoji();
-  }, [emoji1, emoji2]);
-  
-  return { result, loading, error };
-};
-
-/**
- * React Hook: 用于随机 Emoji 组合
- */
-export const useRandomEmojiMix = () => {
-  const [result, setResult] = useState<EmojiCombination | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const getRandomMix = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      if (!emojiData) {
-        await loadEmojiData();
-      }
-      
-      const randomMix = generateRandomEmojiLink();
-      
-      if (randomMix) {
-        setResult(randomMix);
-      } else {
-        setError("无法生成随机Emoji组合");
-      }
-    } catch (err) {
-      console.error("Error generating random emoji mix:", err);
-      setError("生成随机组合过程中出错");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // 预加载数据
-  useEffect(() => {
-    loadEmojiData().catch(err => console.error("Failed to preload emoji data:", err));
-  }, []);
-  
-  return { result, loading, error, getRandomMix };
-};
-
-// 预加载数据
-loadEmojiData().catch(console.error);
+}; 

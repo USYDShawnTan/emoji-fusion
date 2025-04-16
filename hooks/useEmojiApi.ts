@@ -1,5 +1,8 @@
+'use client';
+
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useEmojiMix, generateRandomEmojiLink, loadEmojiData, getEmojiSvgUrl } from '../utils/emojiUtils';
+import { generateRandomEmojiLink, loadEmojiData, getEmojiSvgUrl } from '../lib/emojiUtils';
+import useEmojiMix from './useEmojiMix';
 
 // 首先修正接口定义，确保 fusionEmoji 的签名与实现一致
 interface UseFusionResult {

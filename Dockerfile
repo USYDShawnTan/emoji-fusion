@@ -1,37 +1,43 @@
-# 单阶段构建
-FROM node:18-alpine
+# 构建阶段
+FROM node:18-alpine AS builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 配置npm镜像并全局安装pnpm和tsx
-RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g pnpm@latest tsx
+# 安装pnpm
+RUN npm install -g pnpm
 
-# 首先只复制package.json，利用Docker缓存层
-COPY package.json ./
+# 复制package文件
+COPY package.json pnpm-lock.yaml* ./
 
-# 复制.npmrc文件
-COPY .npmrc ./
+# 安装依赖
+RUN pnpm install --frozen-lockfile
 
-# 安装所有依赖（包括开发依赖）
-RUN pnpm install
-
-# 复制所有源代码和资源
+# 复制源代码
 COPY . .
 
 # 构建应用
 RUN pnpm build
 
-# 安装生产依赖（可选：清理开发依赖以减少镜像大小）
-# RUN pnpm install --prod
+# 生产阶段
+FROM node:18-alpine AS runner
 
-# 设置环境变量
-ENV NODE_ENV=production \
-    PORT=80
+WORKDIR /app
 
-# 暴露端口
-EXPOSE 80
+ENV NODE_ENV=production
 
-# 启动服务器
-CMD ["tsx", "src/server/server.ts"]
+# 安装pnpm
+RUN npm install -g pnpm
+
+# 复制必要的文件
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-lock.yaml* ./
+
+# 暴露3000端口
+EXPOSE 3000
+
+# 设置容器启动命令
+CMD ["pnpm", "start"] 

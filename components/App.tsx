@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import useEmojiApi from '../hooks/useEmojiApi';
 import PageLayout from './layout/PageLayout';

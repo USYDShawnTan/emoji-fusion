@@ -2,24 +2,26 @@
 
 # Emoji Fusion 表情融合 [![Docker Build](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/docker-publish.yml) [![Emoji Data Update](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/update_emoji_data.yml/badge.svg)](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/update_emoji_data.yml)
 
-这是一个互动性强的网页应用，允许用户将两个表情符号融合成一个全新的创意表情！应用基于 React 构建，使用 Tailwind CSS 设计，并集成了 Three.js 实现量子粒子特效。
+这是一个互动性强的网页应用，允许用户将两个表情符号融合成一个全新的创意表情！应用基于 Next.js 和 React 构建，使用 Tailwind CSS 设计，并集成了 Three.js 实现量子粒子特效。
 
 ## 🚀 特性
 
-- **自动更新**: 每日自动更新最新的emoji组合数据
-- **多平台支持**: Docker镜像支持 AMD64 和 ARM64 架构
-- **生产就绪**: 完整的CI/CD流程，包括自动构建、测试和部署
+- **自动更新**: 每日自动更新最新的 emoji 组合数据
+- **多平台支持**: Docker 镜像支持 AMD64 和 ARM64 架构
+- **生产就绪**: 完整的 CI/CD 流程，包括自动构建、测试和部署
 - **安全性**: 集成漏洞扫描，确保容器安全
+- **服务器端渲染**: 使用 Next.js 实现更好的 SEO 和初始加载性能
+- **API 路由**: 使用 Next.js API Routes 提供后端服务
 
-## 📢 更新: 集成服务器部署
+## 📢 更新: 迁移至 Next.js 和 pnpm
 
-最新更新改进了部署架构，使用Express服务器同时提供API和静态文件服务，使Docker容器更加简洁高效：
+最新版本已将项目迁移至 Next.js 框架，提供更好的性能和开发体验：
 
-- **简化架构**：单一服务器处理前端和API
-- **简化部署**：不再需要复杂的Nginx反向代理配置
-- **集成式容器**：Docker容器现在包含完整应用（前端 + 后端）
-
-在开发环境中，前端和后端仍然分开运行（利用Vite的代理功能），而在生产环境中，Express服务器同时处理所有内容。
+- **服务器端渲染**：提升首屏加载速度和 SEO 表现
+- **API Routes**：集成 API 端点，无需单独的 Express 服务器
+- **改进的路由系统**：基于文件系统的直观路由
+- **包管理器升级**：使用 pnpm 替代 npm，提供更快的安装速度和更小的磁盘占用
+- **Docker 优化**：多阶段构建流程，减小镜像大小
 
 ## ✨ 功能特点
 
@@ -31,20 +33,19 @@
 
 ## 🛠️ 技术栈
 
-- **前端框架**: React 18 + TypeScript
+- **前端框架**: Next.js 14 + React 18 + TypeScript
 - **样式**: Tailwind CSS
 - **3D 渲染**: Three.js (量子粒子场效果)
-- **后端**: Express.js (提供API和静态文件服务)
-- **构建工具**: Vite
-- **打包优化**: Rollup 代码分割
-- **部署选项**: Netlify, Docker 集成服务器
+- **包管理**: pnpm
+- **容器化**: Docker 多阶段构建
+- **API**: Next.js API Routes
 
 ## 🚀 快速开始
 
 ## 🛠️ 开发环境要求
 
 - Node.js 18+
-- npm 8+
+- pnpm 8+ (推荐) 或 npm 8+
 - Docker (可选，用于容器化部署)
 - Git
 
@@ -60,7 +61,7 @@
    ```
 3. 安装依赖：
    ```bash
-   npm install
+   pnpm install
    ```
 
 ### 本地开发
@@ -68,115 +69,92 @@
 启动开发服务器:
 
 ```
-npm run dev
+pnpm dev
 ```
 
-应用将在 `http://localhost:5173` 上运行，API服务器将在 `http://localhost:3000` 上运行
+应用将在 `http://localhost:3000` 上运行
 
 ### 构建生产版本
 
 ```
-npm run build
+pnpm build
 ```
 
-构建产物将输出到 `dist` 目录
+构建产物将输出到 `.next` 目录
 
 ### 运行生产服务器
 
 ```
-# 构建前端应用
-npm run build
-
-# 启动生产服务器
-npm run start
-# 或指定端口
-npm run start:prod 
+pnpm start
 ```
-
-注意：项目使用cross-env来确保环境变量在Windows、macOS和Linux上都能正确设置。
 
 ## 🐳 Docker 部署
 
-### 使用 Docker Compose
+### 使用 Docker Compose (开发环境)
 
-1. 确保已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)
+```bash
+# 启动开发环境
+pnpm docker:dev
+```
 
-2. 使用项目中的 `docker-compose.yml` 配置：
-
-   ```bash
-   # 构建并启动容器
-   docker-compose up -d
-   ```
-
-3. 应用将在 http://localhost:8080 上可用。
-
-### 自定义构建
-
-如果需要自定义构建：
+### 使用 Docker (生产环境)
 
 ```bash
 # 构建镜像
-docker build -t emoji-fusion .
+pnpm docker:build
 
 # 运行容器
-docker run -d -p 8080:80 --name emoji-fusion emoji-fusion
+pnpm docker:run
 ```
 
-更多详细信息和高级配置，请参见 [DOCKER.md](./DOCKER.md)。
+应用将在 http://localhost:3000 上可用。
 
 ## 🌐 API 说明
 
-本应用使用了Express后端提供的API：
+本应用使用 Next.js API Routes 提供以下端点：
 
-- `/api/random` - 随机组合两个表情
-- `/api/:combination` - 合成两个特定表情 (格式: emoji1+emoji2)
-- `/api/:emoji` - 获取单个表情
+- `/api/emoji` - 随机组合两个表情
+- `/api/emoji/:slug` - 合成两个特定表情 (格式: emoji1+emoji2) 或获取单个表情
 
 每个端点支持两种返回格式：
-- 默认: 返回JSON格式的图片信息
+
+- 默认: 返回 JSON 格式的图片信息
 - 图片: 添加`?format=pic`参数，直接返回图片
-
-前端通过 `useEmojiApi` Hook 处理表情融合逻辑：
-
-- 预加载常用表情组合，提供顺畅用户体验
-- 通过缓存机制减少数据请求，优化性能
-- 提供静态和动态表情展示选项
-
-查看源码中的 [`useEmojiApi`](./src/hooks/useEmojiApi.ts) 和 [`emojiUtils`](./src/utils/emojiUtils.ts) 了解更多实现细节。
 
 ## 📋 自定义配置
 
 可通过修改以下文件定制应用：
 
 - [`tailwind.config.js`](./tailwind.config.js): 调整样式主题
-- [`vite.config.ts`](./vite.config.ts): 配置构建参数
-- [`Dockerfile`](./Dockerfile): 调整Docker构建设置
+- [`next.config.js`](./next.config.js): 配置 Next.js 参数
+- [`Dockerfile`](./Dockerfile): 调整 Docker 构建设置
+- [`docker-compose.yml`](./docker-compose.yml): 配置 Docker 开发环境
 
 ## 📁 项目结构
 
 ```
 emoji-fusion/
-├── src/
-│   ├── components/     # React组件
-│   ├── hooks/         # 自定义Hooks
-│   ├── utils/         # 工具函数
-│   └── server/        # Express服务器
-├── data/              # Emoji数据和更新脚本
+├── app/                # Next.js应用目录
+│   ├── api/           # API Routes
+│   ├── components/    # React组件
+│   └── page.tsx       # 主页
+├── lib/               # 工具函数和库
 ├── public/            # 静态资源
+├── styles/            # 全局样式
 └── .github/           # GitHub Actions工作流
 ```
 
 ## 🔧 性能优化
 
-- **图片预加载**: 智能预加载常用emoji组合
-- **响应式缓存**: 实现多层缓存策略
-- **代码分割**: 使用动态导入优化加载时间
-- **Docker层优化**: 优化Docker镜像大小和构建时间
-- **CDN加速**: 支持通过CDN分发静态资源
+- **服务器端渲染**: 使用 Next.js SSR 提升首屏加载速度
+- **图片优化**: 自动图片优化和 WebP 支持
+- **代码分割**: 自动代码分割和懒加载
+- **Docker 多阶段构建**: 减小生产镜像大小
+- **pnpm**: 高效的依赖管理和磁盘空间利用
 
 ## 👥 贡献指南
 
-1. Fork本仓库并克隆到本地
+1. Fork 本仓库并克隆到本地
 2. 创建新分支：
    ```bash
    git checkout -b feature/amazing-feature
@@ -191,7 +169,7 @@ emoji-fusion/
    ```bash
    git push origin feature/amazing-feature
    ```
-6. 打开Pull Request
+6. 打开 Pull Request
 
 ### 开发流程
 
