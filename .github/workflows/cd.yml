@@ -1,10 +1,14 @@
 name: CD - Continuous Deployment
 
 on:
+  workflow_run:
+    workflows: ["CI - Continuous Integration"]  # 等待 CI 工作流程完成
+    types:
+      - completed
+    branches: [ main ]  # 只有 main 分支的 CI 完成才触发
   push:
-    branches: [ main ]  # 监听 main 分支的推送
     tags:
-      - 'v*'
+      - 'v*'  # 标签推送仍然直接触发（因为标签通常是经过验证的）
   workflow_dispatch:
 
 env:
@@ -26,6 +30,18 @@ jobs:
       image-tags: ${{ steps.meta.outputs.tags }}
     
     steps:
+      - name: Check CI workflow result
+        if: github.event_name == 'workflow_run'
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "❌ CI workflow failed or was cancelled"
+            echo "CI conclusion: ${{ github.event.workflow_run.conclusion }}"
+            exit 1
+          else
+            echo "✅ CI workflow completed successfully"
+            echo "CI conclusion: ${{ github.event.workflow_run.conclusion }}"
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -91,12 +107,16 @@ jobs:
           echo "🚀 Deploying ${{ needs.docker-build.outputs.image-tags }} to production"
           echo "📝 Image digest: ${{ needs.docker-build.outputs.image-digest }}"
           
-          # 检查是否为标签触发的部署
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          # 显示触发方式
+          if [ "${{ github.event_name }}" == "workflow_run" ]; then
+            echo "🔄 Triggered by CI completion"
+            echo "🌿 Branch: ${{ github.event.workflow_run.head_branch }}"
+            echo "✅ CI passed, proceeding with deployment"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "🏷️  Tag deployment: ${{ github.ref_name }}"
             echo "🎯 This is a versioned release deployment"
           else
-            echo "🌿 Branch deployment: ${{ github.ref_name }}"
+            echo "🔧 Manual deployment trigger"
           fi
           
           # 这里添加实际的部署逻辑
