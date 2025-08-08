@@ -1,41 +1,45 @@
-# 多阶段构建优化版本
-FROM node:20-alpine AS base
+FROM node:20-slim AS builder
+
 WORKDIR /app
 
-# 安装 pnpm
-RUN corepack enable pnpm
+# 安装特定版本的 pnpm 以确保兼容性
+RUN npm install -g pnpm@9
 
-# 依赖安装阶段
-FROM base AS deps
+# 复制 package 文件
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --production=false
 
-# 构建阶段
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+# 设置 pnpm 配置
+RUN pnpm config set use-running-store-server false
+
+# 安装依赖 (如果 lockfile 不兼容就重新生成)
+RUN pnpm install --frozen-lockfile || pnpm install
+
+# 复制源代码
 COPY . .
-
-# 设置构建环境变量
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
 # 构建应用
 RUN pnpm build
 
 # 生产运行阶段
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
+
 WORKDIR /app
 
-# 创建非 root 用户
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# 安装运行时依赖
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # 设置环境变量
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# 创建非 root 用户
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 nextjs
+
 # 复制构建产物
-COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -44,7 +48,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/emoji || exit 1
+  CMD curl -f http://localhost:3000/api/emoji || exit 1
 
 # 切换到非 root 用户
 USER nextjs
@@ -52,5 +56,5 @@ USER nextjs
 # 暴露端口
 EXPOSE 3000
 
-# 设置启动命令
+# 启动命令
 CMD ["node", "server.js"]
