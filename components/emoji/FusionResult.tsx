@@ -11,40 +11,40 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
   const [showImage, setShowImage] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
-  
+
   // 当result变化时，重置状态
   useEffect(() => {
     if (result) {
       setImageLoading(true);
       setShowImage(false);
-      // 添加小延迟以实现更好的动画效果
-      setTimeout(() => setShowImage(true), 100);
+      // 调整延迟，让动画更流畅
+      setTimeout(() => setShowImage(true), 200);
     }
   }, [result?.url]);
-  
+
   // 复制图片的函数
   const handleCopyImage = async () => {
     if (imageRef.current && !imageLoading) {
       try {
         // 模拟右键菜单中的"复制图片"功能
         const imgElement = imageRef.current;
-        
+
         // 创建一个canvas元素
         const canvas = document.createElement('canvas');
         canvas.width = imgElement.naturalWidth;
         canvas.height = imgElement.naturalHeight;
-        
+
         // 在canvas上绘制图像
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(imgElement, 0, 0);
-        
+
         // 转换canvas为blob并复制到剪贴板
         canvas.toBlob(async (blob) => {
           if (blob) {
             const data = new ClipboardItem({ 'image/png': blob });
             await navigator.clipboard.write([data]);
             setCopySuccess(true);
-            
+
             // 3秒后隐藏成功提示
             setTimeout(() => {
               setCopySuccess(false);
@@ -59,17 +59,19 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
 
   // 检查错误类型
   const isNotFoundError = error?.message?.includes('这两个Emoji无法合成');
-  
+
   // 加载状态
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        {/* 加载动画 */}
+      <div className="flex flex-col items-center justify-center py-8">
         <div className="relative">
           {/* 外环 */}
           <div className="absolute inset-0 rounded-full border-4 border-primary-300/30"></div>
           {/* 旋转内环 */}
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary-500 border-r-primary-400"></div>
+          {/* 反向旋转的第二个环 */}
+          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-secondary-400 animate-spin"
+            style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
         </div>
         <p className="mt-6 text-white/80 font-medium animate-pulse-slow">正在融合魔法中...</p>
       </div>
@@ -79,7 +81,7 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
   // 错误状态
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 backdrop-blur-lg bg-white/10 rounded-xl border border-white/20 shadow-glass">
+      <div className="flex flex-col items-center justify-center py-8 backdrop-blur-lg bg-white/10 rounded-xl border border-white/20 shadow-glass">
         <div className="text-center p-6 max-w-xs">
           <div className="mb-4 relative">
             <span className="text-5xl block animate-float">😕</span>
@@ -100,7 +102,7 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
   // 空状态
   if (!result) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 backdrop-blur-lg bg-white/10 rounded-xl border border-white/20 shadow-glass">
+      <div className="flex flex-col items-center justify-center py-8 backdrop-blur-lg bg-white/10 rounded-xl border border-white/20 shadow-glass">
         <div className="text-center px-6 max-w-xs">
           <div className="mb-4">
             <div className="inline-block p-4 bg-white/10 rounded-full backdrop-blur-md">
@@ -118,69 +120,69 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
   // 结果状态
   return (
     <div className="flex flex-col items-center">
-      <div className={`p-4 relative transition-all duration-500 transform ${showImage ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
-        {/* 辉光背景 */}
-        <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-xl transform scale-75"></div>
-        
-        {/* 悬浮容器 */}
-        <div className="bg-white/20 backdrop-blur-md p-5 rounded-2xl shadow-glass border border-white/30 relative">
+      <div className={`relative transition-all duration-500 ease-out transform ${showImage ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
+        }`}>
+        {/* 主容器 - 简化设计 */}
+        <div className="relative backdrop-blur-xl bg-white/15 rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
           {/* 图片加载中动画 */}
           {imageLoading && result?.url && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-sm rounded-2xl z-10">
-              <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-400 border-t-transparent"></div>
+            <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-md rounded-3xl z-10">
+              <div className="relative">
+                {/* 外环 */}
+                <div className="absolute inset-0 rounded-full border-2 border-primary-300/30 animate-ping"></div>
+                {/* 内环 */}
+                <div className="animate-spin rounded-full h-12 w-12 border-3 border-transparent border-t-primary-400 border-r-secondary-400"></div>
+              </div>
             </div>
           )}
-          
-          {/* 复制按钮 */}
-          <button 
-            onClick={handleCopyImage}
-            className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center shadow-lg cursor-pointer z-20"
-            title="复制图片"
-            disabled={imageLoading}
-          >
-            <span className="text-white text-lg">📋</span>
-          </button>
-          
-          {/* 复制成功提示 */}
-          {copySuccess && (
-            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm animate-fade-in z-30">
-              复制成功! ✅
-            </div>
-          )}
-          
-          {/* 图片容器 */}
-          <div className="relative rounded-xl overflow-hidden p-4 min-h-[180px] min-w-[180px] flex items-center justify-center">
+
+          {/* 图片容器 - 简化设计 */}
+          <div className="relative p-8 min-h-[200px] min-w-[200px] flex items-center justify-center">
             {result?.url ? (
-              <img 
-                ref={imageRef}
-                src={result.url} 
-                alt="合成的Emoji" 
-                className="max-h-48 max-w-full object-contain transform transition-all duration-700 hover:scale-110" 
-                style={{
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))',
-                  opacity: imageLoading ? 0 : 1,
-                  transition: 'opacity 0.5s ease, transform 0.5s ease'
-                }}
-                onLoad={() => setImageLoading(false)}
-                onError={(e) => {
-                  setImageLoading(false);
-                  e.currentTarget.src = "https://via.placeholder.com/150?text=加载失败"; 
-                }}
-                crossOrigin="anonymous" // 允许从其他域加载图片并在canvas中使用
-              />
+              <div className="relative z-10">
+                <img
+                  ref={imageRef}
+                  src={result.url}
+                  alt="合成的Emoji"
+                  className={`max-h-52 max-w-full object-contain transform transition-all duration-500 ease-out ${imageLoading ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+                    } hover:scale-105`}
+                  style={{
+                    filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.15))',
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                  onLoad={() => setImageLoading(false)}
+                  onError={(e) => {
+                    setImageLoading(false);
+                    e.currentTarget.src = "https://via.placeholder.com/150?text=加载失败";
+                  }}
+                  crossOrigin="anonymous"
+                />
+              </div>
             ) : (
-              <div className="flex items-center justify-center h-48 w-48 bg-white/10 rounded-lg">
-                <p className="text-white/70">无法加载图片</p>
+              <div className="flex items-center justify-center h-52 w-52 bg-white/10 rounded-2xl backdrop-blur-sm">
+                <p className="text-white/70 font-medium">无法加载图片</p>
               </div>
             )}
           </div>
         </div>
       </div>
-      
-      {/* 成功提示 */}
+
+      {/* 复制图片按钮 - 替换融合成功提示 */}
       {showImage && !imageLoading && (
-        <div className="mt-4 text-white/80 animate-float bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-medium">
-          融合成功! 🎉
+        <div className="mt-6 animate-fade-in">
+          <button
+            onClick={handleCopyImage}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 backdrop-blur-md rounded-full border border-white/20 shadow-lg hover:from-primary-500/30 hover:to-secondary-500/30 hover:scale-105 transition-all duration-300"
+            disabled={imageLoading}
+          >
+            <span className={`text-lg transition-all duration-300 ${copySuccess ? 'scale-110 text-green-500' : 'text-white/90'
+              }`}>
+              {copySuccess ? "✅" : "📋"}
+            </span>
+            <span className="text-white/90 font-medium">
+              {copySuccess ? "复制成功!" : "复制图片"}
+            </span>
+          </button>
         </div>
       )}
     </div>

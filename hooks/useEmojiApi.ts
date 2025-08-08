@@ -31,28 +31,28 @@ export const useEmojiApi = (): UseFusionResult => {
   const [emoji1, setEmoji1] = useState<string>('');
   const [emoji2, setEmoji2] = useState<string>('');
   const { result, loading: apiLoading, error: apiError } = useEmojiMix(emoji1, emoji2);
-  
+
   // 状态管理
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [fusionResult, setFusionResult] = useState<{ url: string } | null>(null);
-  
+
   // 缓存相关Ref
-  const cachedSets = useRef<EmojiSet[]>([]); 
+  const cachedSets = useRef<EmojiSet[]>([]);
   const isCacheReady = useRef<boolean>(false);
   const isPreloading = useRef<boolean>(false);
   const initDataLoaded = useRef<boolean>(false);
-  
+
   // 初始化emoji数据
   useEffect(() => {
     const initializeData = async () => {
       if (initDataLoaded.current) return;
-      
+
       try {
         await loadEmojiData();
         initDataLoaded.current = true;
         console.log("🔄 Emoji数据加载完成");
-        
+
         // 初始预加载缓存
         preloadCache();
       } catch (err) {
@@ -60,7 +60,7 @@ export const useEmojiApi = (): UseFusionResult => {
         setError(new Error("初始化失败"));
       }
     };
-    
+
     initializeData();
   }, []);
 
@@ -68,7 +68,7 @@ export const useEmojiApi = (): UseFusionResult => {
   const preloadCache = useCallback(async () => {
     if (isPreloading.current) return;
     isPreloading.current = true;
-    
+
     console.log("🔄 开始预加载缓存");
     try {
       // 计算需要加载的数量
@@ -77,19 +77,19 @@ export const useEmojiApi = (): UseFusionResult => {
         isPreloading.current = false;
         return;
       }
-      
+
       // 并行预加载多个套件
       const promises = [];
       for (let i = 0; i < neededCount; i++) {
         promises.push(preloadSingleSet());
       }
-      
+
       const results = await Promise.all(promises);
       const validResults = results.filter((item): item is EmojiSet => item !== null);
-      
+
       // 添加到缓存
       cachedSets.current = [...cachedSets.current, ...validResults];
-      
+
       console.log(`✅ 预加载完成，当前缓存${cachedSets.current.length}组`);
       isCacheReady.current = cachedSets.current.length > 0;
     } catch (err) {
@@ -98,30 +98,30 @@ export const useEmojiApi = (): UseFusionResult => {
       isPreloading.current = false;
     }
   }, []);
-  
+
   // 预加载单个emoji套件(含两个emoji源和一个合成结果)
   const preloadSingleSet = async (): Promise<EmojiSet | null> => {
     try {
       // 使用emojiUtils中的方法获取随机组合
       const randomMix = generateRandomEmojiLink();
       if (!randomMix) return null;
-      
+
       // 使用getEmojiSvgUrl获取emoji源图片链接
       const emoji1Url = getEmojiSvgUrl(randomMix.emoji1);
       const emoji2Url = getEmojiSvgUrl(randomMix.emoji2);
-      
+
       if (!emoji1Url || !emoji2Url) {
         console.warn("无法获取emoji源图片链接", randomMix.emoji1, randomMix.emoji2);
         return null;
       }
-      
+
       // 并行预加载三个URL (两个emoji源 + 一个合成结果)
       await Promise.all([
         preloadImage(emoji1Url),
         preloadImage(emoji2Url),
         preloadImage(randomMix.url)
       ]);
-      
+
       return {
         emoji1: { char: randomMix.emoji1, url: emoji1Url },
         emoji2: { char: randomMix.emoji2, url: emoji2Url },
@@ -132,7 +132,7 @@ export const useEmojiApi = (): UseFusionResult => {
       return null;
     }
   };
-  
+
   // 辅助函数：预加载单个图像
   const preloadImage = (url: string): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -146,30 +146,30 @@ export const useEmojiApi = (): UseFusionResult => {
   // 获取一个随机缓存的组合
   const getRandomCachedSet = (): EmojiSet | null => {
     if (cachedSets.current.length === 0) return null;
-    
+
     // 随机选择一个缓存项
     const index = Math.floor(Math.random() * cachedSets.current.length);
     const selected = cachedSets.current[index];
-    
+
     // 从缓存中移除
     cachedSets.current = [
       ...cachedSets.current.slice(0, index),
       ...cachedSets.current.slice(index + 1)
     ];
-    
+
     // 使用了一个，异步补充缓存
     if (cachedSets.current.length < 3) {
       setTimeout(() => preloadCache(), 0);
     }
-    
+
     return selected;
   };
-  
+
   // 提供一个随机组合(不执行合成)，供App使用
   const randomMix = useCallback(() => {
     const set = getRandomCachedSet();
     if (!set) return null;
-    
+
     return {
       emoji1: set.emoji1.char,
       emoji2: set.emoji2.char,
@@ -183,7 +183,7 @@ export const useEmojiApi = (): UseFusionResult => {
       setFusionResult(result);
       setLoading(false); // 重要：确保这里重置loading状态
     }
-    
+
     if (!apiLoading && apiError) {
       setError(new Error(apiError));
       setLoading(false); // 重要：确保错误时也重置loading状态
@@ -194,20 +194,20 @@ export const useEmojiApi = (): UseFusionResult => {
   const fusionEmoji = useCallback(async (emoji1: string, emoji2: string, preloadedResultUrl?: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // 如果提供了预加载的结果URL，直接使用
       if (preloadedResultUrl) {
         // 设置emoji以保持一致性，但实际上不会触发API调用
         setEmoji1(''); // 先清空，避免触发useEmojiMix的API调用
         setEmoji2('');
-        
+
         // 直接设置结果，跳过API调用
         setFusionResult({ url: preloadedResultUrl });
         setLoading(false);
         return;
       }
-      
+
       // 常规处理流程 - 设置emoji触发API调用
       // 注意：这里实际上会通过useEffect和useEmojiMix触发API调用
       setEmoji1(emoji1);
@@ -226,6 +226,7 @@ export const useEmojiApi = (): UseFusionResult => {
     setEmoji2('');
     setFusionResult(null);
     setError(null);
+    setLoading(false); // 重要：清除loading状态
   }, []);
 
   return {

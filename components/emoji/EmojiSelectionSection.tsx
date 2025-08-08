@@ -15,38 +15,30 @@ const EmojiSelectionSection: React.FC<EmojiSelectionSectionProps> = ({
   onEmojiSelect2
 }) => {
   return (
-    <div className="relative mb-10">
-  
-      
+    <div className="relative mb-8">
       {/* 选择区域 */}
-      <div className="flex items-center justify-center gap-6 md:gap-10">
-        <div className="w-[150px]">
-          <EmojiPicker 
-            selectedEmoji={selectedEmoji1} 
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
+        <div className="w-full max-w-[150px]">
+          <EmojiPicker
+            selectedEmoji={selectedEmoji1}
             onEmojiSelect={onEmojiSelect1}
-            
           />
         </div>
-        
-        {/* 中间加号 - 带动画效果 */}
-        <div className="relative pt-10 px-4">
-          <div className="backdrop-blur-sm rounded-full flex items-center justify-center ">
+
+        {/* 中间加号 - 优化显示效果 */}
+        <div className="flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+            <span className="text-white text-lg font-medium">+</span>
           </div>
-         
-            <span className="text-2xl text-white">+</span>
-         
         </div>
-        
-        <div className="w-[150px]">
-          <EmojiPicker 
-            selectedEmoji={selectedEmoji2} 
+
+        <div className="w-full max-w-[150px]">
+          <EmojiPicker
+            selectedEmoji={selectedEmoji2}
             onEmojiSelect={onEmojiSelect2}
-            
           />
         </div>
       </div>
-      
-      {/* 这里已移除装饰性连接线 */}
     </div>
   );
 };

@@ -13,15 +13,20 @@ export const useEmojiMix = (emoji1: string, emoji2: string) => {
 
   useEffect(() => {
     if (!emoji1 || !emoji2) {
+      // 当emoji为空时，清除所有状态
+      setResult(null);
+      setError(null);
+      setLoading(false);
       return;
     }
 
     setLoading(true);
     setError(null);
+    setResult(null); // 清除之前的结果
 
     try {
       const url = generateEmojiLink(emoji1, emoji2);
-      
+
       if (url) {
         setResult({ url });
       } else {
