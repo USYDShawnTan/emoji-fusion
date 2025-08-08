@@ -2,8 +2,8 @@
  * Emoji 工具类 - 提供 Emoji 处理、合成、显示相关的功能
  */
 
-// 导入本地 JSON 数据
-import emojiDataJson from '../data/emojimix_data.json';
+// 导入本地 JSON 数据 (使用紧凑格式)
+import emojiDataJson from '../data/emojimix_data_compact.json';
 
 // 数据类型定义
 interface EmojiData {
@@ -31,16 +31,16 @@ let dataLoadingPromise: Promise<void> | null = null;
 export const loadEmojiData = async (): Promise<void> => {
   if (emojiData !== null) return;
   if (isDataLoading) return dataLoadingPromise as Promise<void>;
-  
+
   isDataLoading = true;
-  
+
   try {
     // 直接使用导入的数据，无需网络请求
     emojiData = emojiDataJson as EmojiData;
     combinationIndex = buildCombinationIndex(emojiData);
     cachedValidCombinations = Object.keys(combinationIndex);
     isDataLoading = false;
-    
+
     // 创建一个已解析的 Promise 以保持接口一致
     dataLoadingPromise = Promise.resolve();
     return dataLoadingPromise;
@@ -57,14 +57,14 @@ export const loadEmojiData = async (): Promise<void> => {
  */
 const buildCombinationIndex = (data: EmojiData): Record<string, string> => {
   const index: Record<string, string> = {};
-  
+
   for (const dateIndex in data.emojis) {
     const date = data.dates[parseInt(dateIndex)];
     for (const emojiPath of data.emojis[dateIndex]) {
       index[emojiPath] = date;
     }
   }
-  
+
   return index;
 };
 
@@ -77,18 +77,18 @@ const buildCombinationIndex = (data: EmojiData): Record<string, string> => {
 export const getCompleteEmojiUnicode = (emoji: string): string | null => {
   try {
     if (!emoji || emoji.length === 0) return null;
-    
+
     let codePointStr = '';
     let i = 0;
-    
+
     while (i < emoji.length) {
       const codePoint = emoji.codePointAt(i);
       if (codePoint === undefined) break;
-      
+
       // 添加当前码点
       if (codePointStr) codePointStr += '-';
       codePointStr += codePoint.toString(16).toLowerCase();
-      
+
       // 处理代理对 (如表情符号)
       if (codePoint > 0xFFFF) {
         i += 2;
@@ -96,7 +96,7 @@ export const getCompleteEmojiUnicode = (emoji: string): string | null => {
         i += 1;
       }
     }
-    
+
     return codePointStr;
   } catch (e) {
     console.error("Error getting complete emoji unicode:", e);
@@ -111,10 +111,10 @@ export const getCompleteEmojiUnicode = (emoji: string): string | null => {
 export const getMainEmojiUnicode = (emoji: string): string | null => {
   try {
     if (!emoji || emoji.length === 0) return null;
-    
+
     const codePoint = emoji.codePointAt(0);
     if (codePoint === undefined) return null;
-    
+
     return codePoint.toString(16).toLowerCase();
   } catch (e) {
     console.error("Error getting main emoji unicode:", e);
@@ -131,23 +131,23 @@ const emojiToUnicode = (emoji: string): string => {
     const cp = emoji.codePointAt(0);
     return cp ? `u${cp.toString(16).toLowerCase()}` : '';
   }
-  
+
   const codes: string[] = [];
   let i = 0;
-  
+
   while (i < emoji.length) {
     const codePoint = emoji.codePointAt(i);
     if (codePoint === undefined) break;
-    
+
     codes.push(`u${codePoint.toString(16).toLowerCase()}`);
-    
+
     if (codePoint > 0xFFFF) {
       i += 2;
     } else {
       i += 1;
     }
   }
-  
+
   return codes.join('-');
 };
 
@@ -188,7 +188,7 @@ export const getEmojiSvgUrl = (emoji: string): string | null => {
   try {
     const mainUnicode = getMainEmojiUnicode(emoji);
     if (!mainUnicode) return null;
-    
+
     return `https://fonts.gstatic.com/s/e/notoemoji/latest/${mainUnicode}/emoji.svg`;
   } catch (e) {
     console.error("Error getting emoji SVG URL:", e);
@@ -204,7 +204,7 @@ export const getDynamicEmojiUrl = (emoji: string): string | null => {
   try {
     const mainUnicode = getMainEmojiUnicode(emoji);
     if (!mainUnicode) return null;
-    
+
     return `https://fonts.gstatic.com/s/e/notoemoji/latest/${mainUnicode}/512.gif`;
   } catch (e) {
     console.error("Error getting dynamic emoji URL:", e);
@@ -219,13 +219,13 @@ export const getDynamicEmojiUrl = (emoji: string): string | null => {
  */
 export const generateEmojiLink = (emoji1: string, emoji2: string): string | null => {
   if (!emojiData) return null;
-  
+
   const left = emojiToUnicode(emoji1);
   const right = emojiToUnicode(emoji2);
-  
+
   const combination1 = `${left}_${right}`;
   const combination2 = `${right}_${left}`;
-  
+
   if (combination1 in combinationIndex) {
     const date = combinationIndex[combination1];
     return `${emojiData.baseUrl}${date}/${left}/${combination1}.png`;
@@ -233,7 +233,7 @@ export const generateEmojiLink = (emoji1: string, emoji2: string): string | null
     const date = combinationIndex[combination2];
     return `${emojiData.baseUrl}${date}/${right}/${combination2}.png`;
   }
-  
+
   return null;
 };
 
@@ -242,23 +242,23 @@ export const generateEmojiLink = (emoji1: string, emoji2: string): string | null
  */
 export const generateRandomEmojiLink = (): EmojiCombination | null => {
   if (!emojiData || cachedValidCombinations.length === 0) return null;
-  
+
   // 随机选择一个组合
   const randomIndex = Math.floor(Math.random() * cachedValidCombinations.length);
   const combination = cachedValidCombinations[randomIndex];
-  
+
   try {
     // 解析组合以获取原始表情符号
     const [emojiCode1, emojiCode2] = combination.split('_');
-    
+
     // 转换成实际的 Emoji 表情符号
     const emoji1 = unicodeToEmoji(emojiCode1);
     const emoji2 = unicodeToEmoji(emojiCode2);
-    
+
     // 生成 URL 并返回结果
     const date = combinationIndex[combination];
     const url = `${emojiData.baseUrl}${date}/${emojiCode1}/${combination}.png`;
-    
+
     return {
       url,
       emoji1,
