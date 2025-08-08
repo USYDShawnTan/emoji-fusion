@@ -20,7 +20,7 @@ const FusionResult: React.FC<FusionResultProps> = ({ loading, error, result }) =
       // 调整延迟，让动画更流畅
       setTimeout(() => setShowImage(true), 200);
     }
-  }, [result?.url]);
+  }, [result]);
 
   // 复制图片的函数
   const handleCopyImage = async () => {

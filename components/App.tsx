@@ -8,7 +8,7 @@ import MainContent from './emoji/MainContent';
 const App: React.FC = () => {
   const [selectedEmoji1, setSelectedEmoji1] = useState<string>('');
   const [selectedEmoji2, setSelectedEmoji2] = useState<string>('');
-  const { loading, error, fusionResult, fusionEmoji, randomMix, cacheInfo, clearResult } = useEmojiApi();
+  const { loading, error, fusionResult, fusionEmoji, randomMix, clearResult } = useEmojiApi();
   const [isRandomHovered, setIsRandomHovered] = useState(false);
 
   // 使用useRef保存一个标志，表示是否已经进行过合成

@@ -97,6 +97,10 @@ jobs:
             type=ref,event=pr
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Emoji Fusion
+            org.opencontainers.image.description=A web app to fuse two emojis into one
+            org.opencontainers.image.vendor=USYDShawnTan
 
       - name: Build and push Docker image
         id: build
@@ -110,14 +114,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+          sbom: false
 
-  # 容器安全扫描
+  # 容器安全扫描和元数据
   container-scan:
     needs: docker-build
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: spdx-json
+          output-file: sbom.spdx.json
+
       - name: Run Trivy vulnerability scanner on image
         uses: aquasecurity/trivy-action@master
         with:
@@ -130,6 +145,16 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-image-results.sarif'
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.IMAGE_NAME }}
+          short-description: "Emoji Fusion - Fuse two emojis into one creative expression"
+          readme-filepath: ./README.md
 
   # 部署到生产环境
   deploy:

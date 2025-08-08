@@ -31,13 +31,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
     return "请选择表情";
   };
 
-  // 获取按钮变体
-  const getButtonVariant = () => {
-    if (isLoading) return "loading";
-    if (hasResult) return "secondary";
-    if (canPerformAction) return "primary";
-    return "disabled";
-  };
+
 
   return (
     <div className="space-y-6">
