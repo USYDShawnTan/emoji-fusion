@@ -1,0 +1,126 @@
+name: CD - Continuous Deployment
+
+on:
+  push:
+    branches: [ build ]  # 监听 build 分支的推送
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/emoji-fusion
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # Docker 构建和推送
+  docker-build:
+    runs-on: ubuntu-latest
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tags: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - name: Checkout build artifacts from build branch
+        uses: actions/checkout@v4
+        with:
+          ref: build  # 从 build 分支检出构建产物
+
+      - name: Display build info
+        run: |
+          if [ -f "BUILD_INFO.txt" ]; then
+            echo "📦 Build Information:"
+            cat BUILD_INFO.txt
+          else
+            echo "⚠️ No build info found"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Emoji Fusion
+            org.opencontainers.image.description=A web app to fuse two emojis into one
+            org.opencontainers.image.vendor=USYDShawnTan
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.IMAGE_NAME }}
+          short-description: "Emoji Fusion - Fuse two emojis into one creative expression"
+          readme-filepath: ./README.md
+
+  # 部署到生产环境
+  deploy:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying ${{ needs.docker-build.outputs.image-tags }} to production"
+          echo "Image digest: ${{ needs.docker-build.outputs.image-digest }}"
+          # 这里添加实际的部署逻辑
+          # 例如：
+          # - kubectl set image deployment/emoji-fusion app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # - docker-compose up -d
+          # - 调用部署 API
+          echo "✅ Deployment completed successfully"
+
+  # 部署通知
+  notify:
+    needs: [docker-build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Deployment notification
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ 部署成功！"
+            echo "🐳 Docker 镜像: ${{ needs.docker-build.outputs.image-tags }}"
+            echo "📝 镜像摘要: ${{ needs.docker-build.outputs.image-digest }}"
+          else
+            echo "❌ 部署失败"
+            echo "请检查部署日志"
+          fi
+          
+          # 这里可以添加通知逻辑，例如：
+          # - 发送 Slack 消息
+          # - 发送邮件
+          # - 调用 Webhook
