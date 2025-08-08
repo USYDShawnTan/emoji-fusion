@@ -1,183 +1,189 @@
-![emoji-fusion](https://socialify.git.ci/USYDShawnTan/emoji-fusion/image?description=1&font=Jost&forks=1&issues=1&language=1&logo=https%3A%2F%2Femoji.433200.xyz%2Ffavicon.svg&name=1&pattern=Circuit+Board&pulls=1&stargazers=1&theme=Light)
+![emoji-fusion](https://socialify.git.ci/USYDShawnTan/emoji-fusion/image?forks=1&issues=1&language=1&pulls=1&stargazers=1)
 
-# Emoji Fusion 表情融合 [![Docker Build](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/docker-publish.yml) [![Emoji Data Update](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/update_emoji_data.yml/badge.svg)](https://github.com/USYDShawnTan/emoji-fusion/actions/workflows/update_emoji_data.yml)
+## Emoji Fusion 表情融合
 
-这是一个互动性强的网页应用，允许用户将两个表情符号融合成一个全新的创意表情！应用基于 Next.js 和 React 构建，使用 Tailwind CSS 设计，并集成了 Three.js 实现量子粒子特效。
+一个基于 Next.js 的互动应用：选择两个 Emoji，一键融合生成 Emoji Kitchen 风格的合成图。内置高质量 UI、随机探索、一键复制图片等体验。
 
-## 🚀 特性
+### 功能
+- **两两融合**：支持从选择器挑选任意两个表情进行融合
+- **随机组合**：内置缓存与预加载，丝滑随机出图
+- **动/静态预览**：选表情时悬停显示动态 GIF，默认展示 SVG 静态图
+- **一键复制图片**：将融合结果复制到剪贴板
+- **API 可复用**：通过内置 API 随机或指定组合生成图片链接/图片流
 
-- **自动更新**: 每日自动更新最新的 emoji 组合数据
-- **多平台支持**: Docker 镜像支持 AMD64 和 ARM64 架构
-- **生产就绪**: 完整的 CI/CD 流程，包括自动构建、测试和部署
-- **安全性**: 集成漏洞扫描，确保容器安全
-- **服务器端渲染**: 使用 Next.js 实现更好的 SEO 和初始加载性能
-- **API 路由**: 使用 Next.js API Routes 提供后端服务
+### 技术栈
+- **框架**：Next.js 14、React 18、TypeScript
+- **样式**：Tailwind CSS
+- **组件**：emoji-mart（Google Set）
+- **数据**：本地 `data/emojimix_data_compact.json`（Emoji Kitchen 组合索引）
+- **容器化**：Docker 多阶段构建（standalone 运行）
 
-## 📢 更新: 迁移至 Next.js 和 pnpm
+---
 
-最新版本已将项目迁移至 Next.js 框架，提供更好的性能和开发体验：
+## 本地开发
 
-- **服务器端渲染**：提升首屏加载速度和 SEO 表现
-- **API Routes**：集成 API 端点，无需单独的 Express 服务器
-- **改进的路由系统**：基于文件系统的直观路由
-- **包管理器升级**：使用 pnpm 替代 npm，提供更快的安装速度和更小的磁盘占用
-- **Docker 优化**：多阶段构建流程，减小镜像大小
-
-## ✨ 功能特点
-
-- 丰富的表情符号选择器，支持各类标准 emoji
-- 智能融合算法，基于 Google Emoji Kitchen 技术
-- 随机融合功能，一键探索有趣组合
-- 3D 量子特效背景，带来沉浸式体验
-- 响应式设计，完美支持移动端和桌面端
-
-## 🛠️ 技术栈
-
-- **前端框架**: Next.js 14 + React 18 + TypeScript
-- **样式**: Tailwind CSS
-- **3D 渲染**: Three.js (量子粒子场效果)
-- **包管理**: pnpm
-- **容器化**: Docker 多阶段构建
-- **API**: Next.js API Routes
-
-## 🚀 快速开始
-
-## 🛠️ 开发环境要求
-
+### 前置要求
 - Node.js 18+
-- pnpm 8+ (推荐) 或 npm 8+
-- Docker (可选，用于容器化部署)
-- Git
+- pnpm 8+（推荐）
 
-### 安装
-
-1. 克隆仓库：
-   ```bash
-   git clone https://github.com/USYDShawnTan/emoji-fusion.git
-   ```
-2. 进入项目目录：
-   ```bash
-   cd emoji-fusion
-   ```
-3. 安装依赖：
-   ```bash
-   pnpm install
-   ```
-
-### 本地开发
-
-启动开发服务器:
-
-```
+### 安装与启动
+```bash
+pnpm install
 pnpm dev
 ```
+默认访问 `http://localhost:3000`。
 
-应用将在 `http://localhost:3000` 上运行
-
-### 构建生产版本
-
-```
+### 构建与生产运行
+```bash
 pnpm build
-```
-
-构建产物将输出到 `.next` 目录
-
-### 运行生产服务器
-
-```
 pnpm start
 ```
 
-## 🐳 Docker 部署
-
-### 使用 Docker Compose (开发环境)
-
+### 常用脚本
 ```bash
-# 启动开发环境
+pnpm lint          # 代码检查
+pnpm lint:fix      # 自动修复
+pnpm type-check    # TS 类型检查
+pnpm analyze       # 构建体积分析
+```
+
+---
+
+## Docker
+
+开发（docker-compose）
+```bash
 pnpm docker:dev
 ```
 
-### 使用 Docker (生产环境)
-
+生产镜像与运行
 ```bash
-# 构建镜像
 pnpm docker:build
-
-# 运行容器
 pnpm docker:run
 ```
+Dockerfile 使用多阶段构建并输出 Next.js standalone 产物，容器启动后监听 `3000` 端口。
 
-应用将在 http://localhost:3000 上可用。
+---
 
-## 🌐 API 说明
+## API 文档
 
-本应用使用 Next.js API Routes 提供以下端点：
+本应用通过 Next.js Route Handlers 暴露 API：
 
-- `/api/emoji` - 随机组合两个表情
-- `/api/emoji/:slug` - 合成两个特定表情 (格式: emoji1+emoji2) 或获取单个表情
+- `GET /api/emoji`
+  - 功能：随机返回一个可用的 Emoji 融合组合
+  - 参数：`format=pic` 时直接返回图片二进制；否则返回 JSON
 
-每个端点支持两种返回格式：
+- `GET /api/emoji/:slug`
+  - 两种用法：
+    - `/:emoji1+emoji2` 指定两个表情进行融合
+    - `/:emoji` 返回该表情的动态 GIF（非融合）
+  - 参数：`format=pic` 同上
 
-- 默认: 返回 JSON 格式的图片信息
-- 图片: 添加`?format=pic`参数，直接返回图片
+示例：
+```bash
+# 1) 随机组合 - 返回 JSON
+curl http://localhost:3000/api/emoji
 
-## 📋 自定义配置
+# 2) 随机组合 - 直接返回图片并保存
+curl -L "http://localhost:3000/api/emoji?format=pic" -o random.png
 
-可通过修改以下文件定制应用：
+# 3) 指定组合（直接用 Emoji 字符）- 返回 JSON
+curl "http://localhost:3000/api/emoji/😀+😂"
 
-- [`tailwind.config.js`](./tailwind.config.js): 调整样式主题
-- [`next.config.js`](./next.config.js): 配置 Next.js 参数
-- [`Dockerfile`](./Dockerfile): 调整 Docker 构建设置
-- [`docker-compose.yml`](./docker-compose.yml): 配置 Docker 开发环境
+# 4) 指定组合 - 直接返回图片
+curl -L "http://localhost:3000/api/emoji/😀+😂?format=pic" -o combo.png
 
-## 📁 项目结构
+# 5) 单个 Emoji 的动态 GIF
+curl -L "http://localhost:3000/api/emoji/😀?format=pic" -o smile.gif
+```
+
+返回 JSON（示例）：
+```json
+{
+  "image": "https://.../u1f600_u1f602.png",
+  "emoji1": "😀",
+  "emoji2": "😂"
+}
+```
+
+---
+
+## 目录结构（关键）
 
 ```
 emoji-fusion/
-├── app/                # Next.js应用目录
-│   ├── api/           # API Routes
-│   ├── components/    # React组件
-│   └── page.tsx       # 主页
-├── lib/               # 工具函数和库
-├── public/            # 静态资源
-├── styles/            # 全局样式
-└── .github/           # GitHub Actions工作流
+├─ app/
+│  ├─ api/
+│  │  └─ emoji/
+│  │     ├─ [slug]/route.ts      # 指定组合/单表情动态图 API
+│  │     └─ route.ts             # 随机组合 API
+│  ├─ globals.css
+│  ├─ layout.tsx
+│  └─ page.tsx                   # 入口页，挂载 App
+├─ components/
+│  ├─ App.tsx                    # 应用壳与交互逻辑胶水层
+│  ├─ emoji/
+│  │  ├─ EmojiPicker.tsx        # 表情选择器（动态/静态预览）
+│  │  ├─ EmojiSelectionSection.tsx
+│  │  ├─ ActionButtons.tsx      # 随机/融合/清除 按钮
+│  │  ├─ FusionResult.tsx       # 结果展示与复制
+│  │  └─ MainContent.tsx
+│  └─ layout/
+│     ├─ PageLayout.tsx
+│     ├─ PageHeader.tsx
+│     ├─ PageFooter.tsx
+│     └─ EmojiQuantumField.tsx
+├─ hooks/
+│  ├─ useEmojiApi.ts            # 融合流程、缓存与预加载
+│  └─ useEmojiMix.ts            # 将两个 Emoji 映射为合成图 URL
+├─ lib/
+│  └─ emojiUtils.ts             # 数据加载、URL 生成、Unicode 转换
+├─ data/
+│  └─ emojimix_data_compact.json# Emoji Kitchen 组合索引与基准路径
+├─ Dockerfile
+├─ docker-compose.yml
+├─ next.config.js
+├─ package.json
+└─ tailwind.config.js
 ```
 
-## 🔧 性能优化
+---
 
-- **服务器端渲染**: 使用 Next.js SSR 提升首屏加载速度
-- **图片优化**: 自动图片优化和 WebP 支持
-- **代码分割**: 自动代码分割和懒加载
-- **Docker 多阶段构建**: 减小生产镜像大小
-- **pnpm**: 高效的依赖管理和磁盘空间利用
+## 实现要点
 
-## 👥 贡献指南
+- `lib/emojiUtils.ts`
+  - 本地加载 `emojimix_data_compact.json`，构建组合索引
+  - 将 Emoji 转 Unicode 格式（如 `😀` → `u1f600`），拼装合成图 URL
+  - 提供 `generateEmojiLink(emoji1, emoji2)`、`generateRandomEmojiLink()`、`getEmojiSvgUrl()`、`getDynamicEmojiUrl()` 等方法
 
-1. Fork 本仓库并克隆到本地
-2. 创建新分支：
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. 进行修改并测试
-4. 提交变更：
-   ```bash
-   git commit -m 'feat: add amazing feature'
-   ```
-   请遵循[约定式提交](https://www.conventionalcommits.org/)规范
-5. 推送到分支：
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-6. 打开 Pull Request
+- `hooks/useEmojiApi.ts`
+  - 维护融合状态与错误处理
+  - 预加载若干随机组合（含两个源图与合成结果），提高随机出图速度
+  - 支持“假加载”过渡动画与一键清除
 
-### 开发流程
+- 前端交互
+  - 选择器采用 emoji-mart 的 Google 表情数据集
+  - 悬停预览动态 GIF（来源 `fonts.gstatic.com`），默认展示 SVG 静态图
+  - 合成结果支持复制到剪贴板（Canvas 转 Blob）
 
-- 确保代码通过所有测试
-- 遵循项目的代码风格和最佳实践
-- 更新相关文档
-- 添加必要的测试用例
+---
 
-## 📄 许可证
+## 配置与可定制
+- 远程图片白名单：`next.config.js` 中 `images.remotePatterns`
+- 样式主题：`tailwind.config.js` 与 `app/globals.css`
+- Docker 构建：`Dockerfile`、`docker-compose.yml`
 
-本项目基于 MIT 许可证开源。详情查看 [LICENSE](./LICENSE) 文件。
+本项目当前不需要额外环境变量。
+
+---
+
+## 贡献
+欢迎 PR 与 Issue！提交前请：
+- 使用 `pnpm lint`、`pnpm type-check` 保持代码质量
+- 保持命名清晰、类型安全与可读性
+- 如修改行为，请补充或更新相应文档
+
+---
+
+## 许可证
+MIT，详见 `LICENSE`。
