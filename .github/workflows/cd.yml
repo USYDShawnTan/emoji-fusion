@@ -45,6 +45,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
@@ -85,10 +89,19 @@ jobs:
       - name: Deploy to production
         run: |
           echo "🚀 Deploying ${{ needs.docker-build.outputs.image-tags }} to production"
-          echo "Image digest: ${{ needs.docker-build.outputs.image-digest }}"
+          echo "📝 Image digest: ${{ needs.docker-build.outputs.image-digest }}"
+          
+          # 检查是否为标签触发的部署
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "🏷️  Tag deployment: ${{ github.ref_name }}"
+            echo "🎯 This is a versioned release deployment"
+          else
+            echo "🌿 Branch deployment: ${{ github.ref_name }}"
+          fi
+          
           # 这里添加实际的部署逻辑
           # 例如：
-          # - kubectl set image deployment/emoji-fusion app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # - kubectl set image deployment/emoji-fusion app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           # - docker-compose up -d
           # - 调用部署 API
           echo "✅ Deployment completed successfully"
@@ -106,6 +119,15 @@ jobs:
             echo "✅ 部署成功！"
             echo "🐳 Docker 镜像: ${{ needs.docker-build.outputs.image-tags }}"
             echo "📝 镜像摘要: ${{ needs.docker-build.outputs.image-digest }}"
+            
+            # 显示版本信息
+            if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+              echo "🏷️  版本标签: ${{ github.ref_name }}"
+              echo "🎉 新版本发布成功！"
+            else
+              echo "🌿 分支: ${{ github.ref_name }}"
+              echo "🔄 持续部署完成"
+            fi
           else
             echo "❌ 部署失败"
             echo "请检查部署日志"
@@ -113,5 +135,6 @@ jobs:
           
           # 这里可以添加通知逻辑，例如：
           # - 发送 Slack 消息
-          # - 发送邮件
+          # - 发送邮件  
           # - 调用 Webhook
+          # - GitHub Release 通知
