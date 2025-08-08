@@ -47,38 +47,6 @@ jobs:
       - name: Build check
         run: pnpm build
 
-      - name: Push build artifacts to build branch
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          # 配置 git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # 创建或切换到 build 分支
-          git fetch origin build:build 2>/dev/null || git checkout -b build
-          git checkout build
-          
-          # 清理 build 分支，只保留构建产物
-          git rm -rf . 2>/dev/null || true
-          
-          # 复制构建产物
-          git checkout main -- .next/ public/ package.json pnpm-lock.yaml Dockerfile data/ 2>/dev/null || true
-          
-          # 添加构建信息
-          echo "Build from commit: ${{ github.sha }}" > BUILD_INFO.txt
-          echo "Build time: $(date)" >> BUILD_INFO.txt
-          echo "Branch: ${{ github.ref_name }}" >> BUILD_INFO.txt
-          
-          # 提交构建产物
-          git add .
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Build artifacts from ${{ github.sha }}"
-            git push origin build
-            echo "✅ Build artifacts pushed to build branch"
-          fi
-
   # 测试 (如果有的话)
   test:
     runs-on: ubuntu-latest
