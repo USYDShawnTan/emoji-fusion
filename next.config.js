@@ -18,10 +18,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["emoji-mart"],
   },
-  // 指明以下路由为动态路由，不进行静态生成
-  serverActions: {
-    allowedOrigins: ["localhost:3000"],
-  },
   output: "standalone",
   swcMinify: true,
 };

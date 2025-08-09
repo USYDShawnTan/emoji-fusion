@@ -14,4 +14,5 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
+      - METRICS_ENABLED=1
     command: pnpm dev

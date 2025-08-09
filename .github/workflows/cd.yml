@@ -65,7 +65,8 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            # 使用稳定安全的 SHA 标签，避免分支名为空时产生以 '-' 开头的非法标签
+            type=sha,format=short,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.title=Emoji Fusion
